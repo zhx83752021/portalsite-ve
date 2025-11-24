@@ -237,16 +237,18 @@ const handleSave = async () => {
         if (categoryForm.id) {
           const index = categoryList.value.findIndex(item => item.id === categoryForm.id)
           if (index > -1) {
+            const existingItem = categoryList.value[index]
             categoryList.value[index] = {
-              ...categoryList.value[index],
+              ...existingItem,
               ...categoryForm,
-              articleCount: categoryList.value[index].articleCount
+              articleCount: existingItem.articleCount,
+              createdAt: existingItem.createdAt
             }
           }
         } else {
           categoryList.value.push({
-            id: Date.now(),
             ...categoryForm,
+            id: Date.now(),
             articleCount: 0,
             createdAt: new Date().toLocaleString('zh-CN')
           })

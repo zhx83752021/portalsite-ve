@@ -10,7 +10,7 @@
                 <h1>{{ article.title }}</h1>
                 <div class="article-meta">
                   <span><el-icon><User /></el-icon> {{ article.authorName }}</span>
-                  <span><el-icon><Clock /></el-icon> {{ formatTime(article.createdAt) }}</span>
+                  <span><el-icon><Clock /></el-icon> {{ formatTime(article.createdAt || '') }}</span>
                   <span><el-icon><View /></el-icon> {{ article.views }} 阅读</span>
                   <el-tag v-if="article.categoryName">{{ article.categoryName }}</el-tag>
                 </div>

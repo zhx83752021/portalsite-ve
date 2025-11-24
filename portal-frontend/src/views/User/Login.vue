@@ -97,7 +97,7 @@ const handleLogin = async () => {
       if (error.message?.includes('Failed to fetch') || error.message?.includes('Network')) {
         const mockUser = {
           id: 1,
-          username: loginForm.email.split('@')[0],
+          username: loginForm.email.split('@')[0] || 'user',
           email: loginForm.email,
           avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=1',
           role: 'user'

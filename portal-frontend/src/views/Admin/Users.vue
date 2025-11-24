@@ -262,9 +262,13 @@ const handleSave = async () => {
       setTimeout(() => {
         const index = userList.value.findIndex(item => item.id === userForm.id)
         if (index > -1) {
-          userList.value[index] = {
-            ...userList.value[index],
-            ...userForm
+          const existingUser = userList.value[index]
+          if (existingUser) {
+            userList.value[index] = {
+              ...existingUser,
+              ...userForm,
+              createdAt: existingUser.createdAt
+            }
           }
         }
 
@@ -294,7 +298,10 @@ const handleToggleStatus = (row: any) => {
       // 模拟切换
       const index = userList.value.findIndex(item => item.id === row.id)
       if (index > -1) {
-        userList.value[index].status = row.status === 1 ? 0 : 1
+        const user = userList.value[index]
+        if (user) {
+          user.status = row.status === 1 ? 0 : 1
+        }
       }
       ElMessage.success(`${action}成功`)
     } catch (error: any) {

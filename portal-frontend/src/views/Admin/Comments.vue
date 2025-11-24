@@ -190,7 +190,10 @@ const handleApprove = (row: any) => {
       // 模拟通过
       const index = commentList.value.findIndex(item => item.id === row.id)
       if (index > -1) {
-        commentList.value[index].status = 1
+        const comment = commentList.value[index]
+        if (comment) {
+          comment.status = 1
+        }
       }
       ElMessage.success('审核通过')
     } catch (error: any) {
@@ -215,7 +218,10 @@ const handleReject = (row: any) => {
       // 模拟拒绝
       const index = commentList.value.findIndex(item => item.id === row.id)
       if (index > -1) {
-        commentList.value[index].status = 2
+        const comment = commentList.value[index]
+        if (comment) {
+          comment.status = 2
+        }
       }
       ElMessage.success('已拒绝')
     } catch (error: any) {
