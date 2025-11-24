@@ -1,24 +1,7 @@
 {
-    "version": 2,
-    "builds": [
-        {
-            "src": "package.json",
-            "use": "@vercel/static-build",
-            "config": {
-                "distDir": "dist"
-            }
-        }
-    ],
-    "routes": [
-        {
-            "src": "/api/(.*)",
-            "dest": "https://your-backend-domain.com/api/$1"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "/$1"
-        }
-    ],
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "framework": "vite",
     "headers": [
         {
             "source": "/(.*)",
@@ -38,11 +21,15 @@
                 {
                     "key": "Referrer-Policy",
                     "value": "no-referrer-when-downgrade"
+                },
+                {
+                    "key": "Content-Security-Policy",
+                    "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*"
                 }
             ]
         },
         {
-            "source": "/(.+\\.(css|js|jpg|jpeg|png|gif|svg|woff|woff2|ttf|eot|ico))",
+            "source": "/assets/(.*)",
             "headers": [
                 {
                     "key": "Cache-Control",
