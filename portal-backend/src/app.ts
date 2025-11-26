@@ -19,8 +19,14 @@ const NODE_ENV = process.env.NODE_ENV || 'development'
 
 // 中间件
 app.use(helmet()) // 安全头
+
+// CORS配置 - 将逗号分隔的字符串转换为数组
+const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+    : '*'
+
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: allowedOrigins,
     credentials: true
 })) // CORS
 app.use(compression()) // 压缩
