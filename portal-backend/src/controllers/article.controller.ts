@@ -165,3 +165,33 @@ export const searchArticles = (
         next(error)
     }
 }
+
+export const getRelatedArticles = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const id = Number(req.params.id)
+        const limit = Number(req.query.limit) || 5
+
+        if (!id || isNaN(id)) {
+            throw new AppError('无效的文章ID', 400)
+        }
+
+        // 获取相同分类的其他文章作为相关文章
+        const currentArticle = mockArticle(id)
+        const allArticles = Array.from({ length: 50 }, (_, i) => mockArticle(i + 1))
+        const relatedArticles = allArticles
+            .filter(a => a.id !== id && a.categoryId === currentArticle.categoryId)
+            .slice(0, limit)
+
+        res.json({
+            code: 200,
+            message: 'success',
+            data: relatedArticles
+        })
+    } catch (error) {
+        next(error)
+    }
+}

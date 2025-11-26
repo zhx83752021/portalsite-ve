@@ -4,7 +4,8 @@ import {
     getArticleById,
     getHotArticles,
     getRecommendArticles,
-    searchArticles
+    searchArticles,
+    getRelatedArticles
 } from '../controllers/article.controller'
 import { optionalAuth } from '../middlewares/auth'
 
@@ -14,6 +15,7 @@ router.get('/', optionalAuth, getArticles)
 router.get('/hot', getHotArticles)
 router.get('/recommend', getRecommendArticles)
 router.get('/search', searchArticles)
+router.get('/:id/related', getRelatedArticles)
 router.get('/:id', optionalAuth, getArticleById)
 
 export default router
