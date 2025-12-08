@@ -13,12 +13,13 @@
 本项目是一个**生产就绪**的全栈门户网站应用，参考政务网站设计风格，提供专业、美观的用户界面。
 
 **核心特性：**
+
 - ✅ **前端**：Vue 3 + TypeScript + Element Plus + Pinia
 - ✅ **后端**：Node.js + Express + TypeScript + Prisma ORM
 - ✅ **数据库**：PostgreSQL 真实数据库持久化
-- ✅ **管理后台**：完整的CRUD功能（文章、分类、用户、评论管理）
-- ✅ **响应式设计**：完美支持PC、平板、手机
-- ✅ **测试数据**：50篇文章、8个分类、完整评论系统
+- ✅ **管理后台**：完整的 CRUD 功能（文章、分类、用户、评论管理）
+- ✅ **响应式设计**：完美支持 PC、平板、手机
+- ✅ **测试数据**：50 篇文章、8 个分类、完整评论系统
 
 ---
 
@@ -27,12 +28,14 @@
 ### 🎯 前台门户
 
 #### 精美首页
+
 - 焦点图轮播展示
 - 渐变色频道入口卡片
 - 热点新闻推荐
 - 推荐阅读列表
 
 #### 各频道页面
+
 - 📰 **新闻中心**：分类导航、文章列表、搜索筛选、热门文章、标签云、分页
 - 📈 **财经频道**：市场行情、财经资讯、数据可视化
 - ⚽ **体育赛事**：赛事信息、体育新闻
@@ -40,28 +43,33 @@
 - 💻 **科技前沿**：科技新闻、热门标签
 
 #### 用户功能
+
 - 💬 **评论系统**：发表评论、嵌套回复、点赞、登录检测
 - 👤 **用户中心**：个人资料、收藏管理、浏览历史
-- 🔐 **用户认证**：注册、登录、JWT认证、密码加密
+- 🔐 **用户认证**：注册、登录、JWT 认证、密码加密
 
 ### 🔧 后台管理系统
 
 #### 控制台
+
 - 📊 数据统计卡片（文章、用户、评论、访问量）
 - 🚀 快捷操作入口
 - 📝 最新文章列表
 - 💬 最新评论动态
 
 #### 内容管理
-- **文章管理**：完整CRUD、搜索筛选、状态管理（草稿/已发布）、分页
+
+- **文章管理**：完整 CRUD、搜索筛选、状态管理（草稿/已发布）、分页
 - **分类管理**：新建/编辑/删除分类、文章数统计、排序、别名验证
 - **评论管理**：评论审核、通过/拒绝/删除、状态筛选（待审核/已通过/已拒绝）
 
 #### 系统管理
+
 - **用户管理**：用户列表、角色管理（管理员/普通用户）、禁用/启用、删除
 - **系统设置**：修改密码、个人信息
 
 #### 设计特点
+
 - ✅ 统一的卡片布局
 - ✅ 专业的色彩方案（蓝紫渐变）
 - ✅ 完善的交互反馈
@@ -71,13 +79,15 @@
 ### 🗄️ 数据库支持
 
 #### Prisma + PostgreSQL
-- 🐘 **真实数据库**：PostgreSQL 持久化存储
-- 🔷 **类型安全ORM**：Prisma 自动生成 TypeScript 类型
-- 🔄 **自动迁移**：数据库schema自动同步
-- 🎨 **可视化管理**：Prisma Studio 图形化界面
-- 🌱 **数据播种**：自动创建50篇文章、8个分类、30条评论
 
-#### 数据模型（5个表）
+- 🐘 **真实数据库**：PostgreSQL 持久化存储
+- 🔷 **类型安全 ORM**：Prisma 自动生成 TypeScript 类型
+- 🔄 **自动迁移**：数据库 schema 自动同步
+- 🎨 **可视化管理**：Prisma Studio 图形化界面
+- 🌱 **数据播种**：自动创建 50 篇文章、8 个分类、30 条评论
+
+#### 数据模型（5 个表）
+
 1. **users** - 用户表（角色管理、状态管理）
 2. **categories** - 分类表（父子分类、排序）
 3. **articles** - 文章表（富文本、标签、封面、浏览量）
@@ -85,8 +95,9 @@
 5. **favorites** - 收藏表（用户收藏文章）
 
 #### 安全特性
-- 🔐 密码 bcrypt 加密（10轮加盐）
-- 🛡️ SQL注入防护（Prisma参数化查询）
+
+- 🔐 密码 bcrypt 加密（10 轮加盐）
+- 🛡️ SQL 注入防护（Prisma 参数化查询）
 - 🔗 级联删除（自动维护数据完整性）
 - ✅ 唯一性约束（防止重复数据）
 
@@ -95,66 +106,76 @@
 ## 🛠️ 技术栈
 
 ### 前端技术
-| 技术 | 版本 | 用途 |
-|------|------|------|
-| Vue 3 | 3.x | 渐进式JavaScript框架 |
-| TypeScript | 5.x | 类型安全 |
-| Vite | 5.x | 构建工具 |
-| Element Plus | latest | UI组件库 |
-| Pinia | latest | 状态管理 |
-| Vue Router | 4.x | 路由管理 |
-| Axios | latest | HTTP客户端 |
+
+| 技术         | 版本   | 用途                   |
+| ------------ | ------ | ---------------------- |
+| Vue 3        | 3.x    | 渐进式 JavaScript 框架 |
+| TypeScript   | 5.x    | 类型安全               |
+| Vite         | 5.x    | 构建工具               |
+| Element Plus | latest | UI 组件库              |
+| Pinia        | latest | 状态管理               |
+| Vue Router   | 4.x    | 路由管理               |
+| Axios        | latest | HTTP 客户端            |
 
 ### 后端技术
-| 技术 | 版本 | 用途 |
-|------|------|------|
-| Node.js | 16+ | 运行环境 |
-| Express | 4.18 | Web框架 |
-| TypeScript | 5.3 | 类型安全 |
-| Prisma | 5.7 | ORM |
-| PostgreSQL | 15+ | 关系型数据库 |
-| JWT | 9.0 | 身份认证 |
-| BCrypt | 2.4 | 密码加密 |
+
+| 技术       | 版本 | 用途         |
+| ---------- | ---- | ------------ |
+| Node.js    | 16+  | 运行环境     |
+| Express    | 4.18 | Web 框架     |
+| TypeScript | 5.3  | 类型安全     |
+| Prisma     | 5.7  | ORM          |
+| PostgreSQL | 15+  | 关系型数据库 |
+| JWT        | 9.0  | 身份认证     |
+| BCrypt     | 2.4  | 密码加密     |
 
 ### 开发工具
+
 - ESLint - 代码检查
 - Prettier - 代码格式化
 - Nodemon - 热重载
-- ts-node - TypeScript运行
+- ts-node - TypeScript 运行
 
 ---
 
 ## 🚀 快速开始
 
 ### 前置要求
+
 - Node.js >= 16.x
 - npm >= 8.x
 - PostgreSQL >= 15.x（或使用 pgAdmin）
 
 ### 1️⃣ 克隆项目
+
 ```bash
 git clone <repository-url>
 cd site3
 ```
 
 ### 2️⃣ 前端启动
+
 ```bash
 cd portal-frontend
 npm install
 npm run dev
 ```
+
 ✅ 前端运行在 `http://localhost:5173`
 
 ### 3️⃣ 后端启动（使用数据库）
 
 #### 安装依赖
+
 ```bash
 cd portal-backend
 npm install
 ```
 
 #### 配置数据库
-1. **创建PostgreSQL数据库**
+
+1. **创建 PostgreSQL 数据库**
+
    - 使用 pgAdmin 创建数据库：`portal_db`
    - 或使用命令行：
      ```sql
@@ -171,6 +192,7 @@ npm install
    ```
 
 #### 初始化数据库
+
 ```bash
 # 生成 Prisma Client
 npx prisma generate
@@ -183,15 +205,17 @@ npm run dev
 ```
 
 ✅ 后端运行在 `http://localhost:3000`
-✅ 数据库已包含 50篇文章、8个分类、30条评论
+✅ 数据库已包含 50 篇文章、8 个分类、30 条评论
 
 ### 4️⃣ 访问系统
 
 #### 前台门户
+
 - 地址：`http://localhost:5173`
 - 浏览文章、评论、收藏
 
 #### 后台管理
+
 - 地址：`http://localhost:5173/admin/login`
 - 管理员账号：`admin@portal.com` / `admin123`
 - 测试用户：`zhangsan@example.com` / `123456`
@@ -201,6 +225,7 @@ npm run dev
 ## 📊 Prisma 数据库管理
 
 ### 常用命令
+
 ```bash
 # 可视化管理数据库（推荐）
 npx prisma studio
@@ -217,11 +242,13 @@ npx prisma generate
 ```
 
 ### Prisma Studio 功能
+
 访问 `http://localhost:5555` 可以：
+
 - ✅ 可视化查看所有数据表
 - ✅ 添加、编辑、删除记录
 - ✅ 查看表关系图
-- ✅ 执行SQL查询
+- ✅ 执行 SQL 查询
 - ✅ 导出数据
 
 ---
@@ -291,17 +318,20 @@ site3/
 ## 🎨 设计特色
 
 ### 色彩方案
+
 - **主色调**：渐变紫色 (#667eea → #764ba2)
 - **辅助色**：蓝色 (#409EFF)、绿色 (#67C23A)、橙色 (#E6A23C)、红色 (#F56C6C)
 - **中性色**：深灰 (#303133)、中灰 (#606266)、浅灰 (#909399)
 
 ### 视觉元素
-- **卡片**：圆角8px、阴影效果、hover动画
+
+- **卡片**：圆角 8px、阴影效果、hover 动画
 - **按钮**：渐变背景、悬浮效果
-- **图标**：Element Plus图标库
+- **图标**：Element Plus 图标库
 - **字体**：PingFang SC、Microsoft YaHei
 
 ### 响应式断点
+
 - 📱 手机端：< 768px
 - 📱 平板端：768px - 1024px
 - 💻 桌面端：> 1024px
@@ -311,7 +341,9 @@ site3/
 ## 🔐 账号信息
 
 ### 后台管理账号
+
 - **管理员**
+
   - 邮箱：`admin@portal.com`
   - 密码：`admin123`
   - 权限：完整后台管理权限
@@ -323,13 +355,15 @@ site3/
 
 ---
 
-## 📄 API文档
+## 📄 API 文档
 
 ### 认证接口
+
 - `POST /api/auth/register` - 用户注册
 - `POST /api/auth/login` - 用户登录
 
 ### 文章接口
+
 - `GET /api/articles` - 获取文章列表（支持分页、筛选、搜索）
 - `GET /api/articles/:id` - 获取文章详情
 - `GET /api/articles/hot` - 获取热门文章
@@ -339,15 +373,18 @@ site3/
 - `DELETE /api/articles/:id` - 删除文章（需认证）
 
 ### 分类接口
+
 - `GET /api/categories` - 获取分类列表
 
 ### 评论接口
+
 - `GET /api/comments` - 获取评论列表
 - `POST /api/comments` - 发表评论（需认证）
 - `PUT /api/comments/:id/approve` - 审核评论（需管理员）
 - `DELETE /api/comments/:id` - 删除评论（需认证）
 
 ### 用户接口
+
 - `GET /api/user/info` - 获取用户信息（需认证）
 - `PUT /api/user/info` - 更新用户信息（需认证）
 
@@ -381,11 +418,13 @@ docker-compose exec backend npm run db:seed
 #### 方式二：使用快速部署脚本
 
 **Windows**:
+
 ```powershell
 .\scripts\setup.ps1
 ```
 
 **Linux/Mac**:
+
 ```bash
 chmod +x scripts/setup.sh
 ./scripts/setup.sh
@@ -394,6 +433,7 @@ chmod +x scripts/setup.sh
 ### 手动构建
 
 #### 前端构建
+
 ```bash
 cd portal-frontend
 npm install
@@ -402,6 +442,7 @@ npm run build
 ```
 
 #### 后端构建
+
 ```bash
 cd portal-backend
 npm install
@@ -422,14 +463,18 @@ npm run build
 
 ### 支持的部署平台
 
-| 平台 | 前端 | 后端 | 数据库 | 难度 |
-|------|------|------|--------|------|
-| **Docker** | ✅ | ✅ | ✅ | ⭐⭐ |
-| **Vercel** | ✅ | ⚠️ | ❌ | ⭐ |
-| **Railway** | ✅ | ✅ | ✅ | ⭐⭐ |
-| **AWS** | ✅ | ✅ | ✅ | ⭐⭐⭐⭐ |
-| **DigitalOcean** | ✅ | ✅ | ✅ | ⭐⭐⭐ |
-| **VPS + PM2** | ✅ | ✅ | ✅ | ⭐⭐⭐ |
+| 平台             | 前端 | 后端 | 数据库 | 难度     |
+| ---------------- | ---- | ---- | ------ | -------- |
+| **Vercel** ⭐    | ✅   | ✅   | ✅     | ⭐       |
+| **Docker**       | ✅   | ✅   | ✅     | ⭐⭐     |
+| **AWS**          | ✅   | ✅   | ✅     | ⭐⭐⭐⭐ |
+| **DigitalOcean** | ✅   | ✅   | ✅     | ⭐⭐⭐   |
+| **VPS + PM2**    | ✅   | ✅   | ✅     | ⭐⭐⭐   |
+
+**当前生产环境**：
+
+- 前端：https://www.clm-tug.com/
+- 后端：https://portalsite-backend.vercel.app
 
 ### 部署前检查清单
 
@@ -449,25 +494,27 @@ npm run build
 
 运行 `npm run db:seed` 后自动创建：
 
-- **用户**：3个（1管理员 + 2普通用户）
-- **分类**：8个（时政、社会、国际、军事、财经、体育、娱乐、科技）
-- **文章**：50篇（包含标题、内容、摘要、封面、标签）
-- **评论**：36条（包含嵌套回复）
-- **收藏**：9条
+- **用户**：3 个（1 管理员 + 2 普通用户）
+- **分类**：8 个（时政、社会、国际、军事、财经、体育、娱乐、科技）
+- **文章**：50 篇（包含标题、内容、摘要、封面、标签）
+- **评论**：36 条（包含嵌套回复）
+- **收藏**：9 条
 
 ---
 
 ## 🔧 开发说明
 
 ### 代码规范
+
 - ✅ TypeScript 严格模式
 - ✅ Vue 3 Composition API
 - ✅ ESLint 代码检查
 - ✅ Prettier 代码格式化
 
 ### Git 提交规范
+
 - `feat`: 新功能
-- `fix`: 修复bug
+- `fix`: 修复 bug
 - `docs`: 文档更新
 - `style`: 代码格式调整
 - `refactor`: 重构代码
@@ -477,12 +524,14 @@ npm run build
 ### 环境变量
 
 #### 前端 (.env)
+
 ```env
 VITE_API_BASE_URL=/api        # API地址
 VITE_APP_TITLE=门户网站        # 应用标题
 ```
 
 #### 后端 (.env)
+
 ```env
 # 应用配置
 NODE_ENV=development
@@ -504,42 +553,50 @@ CORS_ORIGIN=http://localhost:5173
 ## ❓ 常见问题
 
 ### Q: 提示"Can't reach database server"
-**A**: 检查PostgreSQL服务是否运行
-- Windows: 打开"服务"，查找PostgreSQL服务
+
+**A**: 检查 PostgreSQL 服务是否运行
+
+- Windows: 打开"服务"，查找 PostgreSQL 服务
 - Mac: `brew services list`
 - Linux: `sudo systemctl status postgresql`
 
 ### Q: 提示"database does not exist"
+
 **A**: 需要先创建数据库
+
 ```sql
 CREATE DATABASE portal_db;
 ```
 
-### Q: 忘记PostgreSQL密码
-**A**:
-- Windows: 重新安装PostgreSQL
-- Mac/Linux: 修改 `pg_hba.conf` 文件改为trust认证
+### Q: 忘记 PostgreSQL 密码
 
-### Q: Lint警告 `v-model:current-page`
-**A**: 这是ESLint配置问题，可以忽略。Vue 3中这是正确的语法。
+**A**:
+
+- Windows: 重新安装 PostgreSQL
+- Mac/Linux: 修改 `pg_hba.conf` 文件改为 trust 认证
+
+### Q: Lint 警告 `v-model:current-page`
+
+**A**: 这是 ESLint 配置问题，可以忽略。Vue 3 中这是正确的语法。
 
 ---
 
 ## 📚 项目文档
 
-| 文档 | 说明 |
-|------|------|
-| [README.md](README.md) | 项目概述和快速开始（本文档） |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | 完整的部署指南（7000+ 字）⭐ |
-| [SECURITY.md](SECURITY.md) | 安全策略和最佳实践 |
-| [PROJECT_STATUS.md](PROJECT_STATUS.md) | 项目状态和完成度报告 |
-| [PRD.md](PRD.md) | 产品需求文档 |
+| 文档                                   | 说明                         |
+| -------------------------------------- | ---------------------------- |
+| [README.md](README.md)                 | 项目概述和快速开始（本文档） |
+| [DEPLOYMENT.md](DEPLOYMENT.md)         | 完整的部署指南（7000+ 字）⭐ |
+| [SECURITY.md](SECURITY.md)             | 安全策略和最佳实践           |
+| [PROJECT_STATUS.md](PROJECT_STATUS.md) | 项目状态和完成度报告         |
+| [PRD.md](PRD.md)                       | 产品需求文档                 |
 
 ---
 
 ## 🚧 后续扩展
 
 ### 功能扩展
+
 - [ ] 富文本编辑器（文章发布）
 - [ ] 图片上传和裁剪
 - [ ] 批量操作（批量删除、批量审核）
@@ -550,15 +607,16 @@ CREATE DATABASE portal_db;
 - [ ] 夜间模式
 
 ### 技术扩展
-- [x] **CI/CD自动部署** ✅ (已完成)
-- [x] **Docker部署** ✅ (已完成)
+
+- [x] **CI/CD 自动部署** ✅ (已完成)
+- [x] **Docker 部署** ✅ (已完成)
 - [x] **日志系统** ✅ (已完成)
-- [ ] Redis缓存层
-- [ ] WebSocket实时通知
+- [ ] Redis 缓存层
+- [ ] WebSocket 实时通知
 - [ ] 文件上传服务（OSS/S3）
 - [ ] 邮件发送服务
 - [ ] 性能监控
-- [ ] PWA支持
+- [ ] PWA 支持
 
 ---
 
@@ -580,13 +638,13 @@ MIT License
 
 ## 👨‍💻 项目信息
 
-- **开发时间**：2024年11月
+- **开发时间**：2024 年 11 月
 - **版本**：v1.0.0
 - **完成度**：98%（生产就绪）
-- **前端代码**：~10,000行
-- **后端代码**：~3,500行
-- **配置文件**：16个部署配置
-- **文档数量**：5份（共15,000+ 字）
+- **前端代码**：~10,000 行
+- **后端代码**：~3,500 行
+- **配置文件**：16 个部署配置
+- **文档数量**：5 份（共 15,000+ 字）
 
 ### 📊 项目统计
 
@@ -599,6 +657,7 @@ MIT License
 ### 🎯 部署就绪
 
 项目已完成所有部署准备工作：
+
 - ✅ Docker 一键部署
 - ✅ CI/CD 自动化流程
 - ✅ 完整的部署文档
