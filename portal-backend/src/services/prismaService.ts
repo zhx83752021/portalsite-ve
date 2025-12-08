@@ -323,15 +323,41 @@ export const categoryService = {
  */
 export const userService = {
     async getUserByEmail(email: string): Promise<User | null> {
-        return await prisma.user.findUnique({ where: { email } }) as User | null
+        const user = await prisma.user.findUnique({ where: { email } })
+        if (!user) return null
+
+        return {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            password: user.password,
+            avatar: user.avatar || undefined,
+            role: user.role.toLowerCase() as 'admin' | 'user',
+            status: user.status,
+            createdAt: user.createdAt.toISOString(),
+            updatedAt: user.updatedAt.toISOString()
+        }
     },
 
     async getUserById(id: number): Promise<User | null> {
-        return await prisma.user.findUnique({ where: { id } }) as User | null
+        const user = await prisma.user.findUnique({ where: { id } })
+        if (!user) return null
+
+        return {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            password: user.password,
+            avatar: user.avatar || undefined,
+            role: user.role.toLowerCase() as 'admin' | 'user',
+            status: user.status,
+            createdAt: user.createdAt.toISOString(),
+            updatedAt: user.updatedAt.toISOString()
+        }
     },
 
     async createUser(data: any): Promise<User> {
-        return await prisma.user.create({
+        const user = await prisma.user.create({
             data: {
                 username: data.username,
                 email: data.email,
@@ -339,7 +365,19 @@ export const userService = {
                 avatar: data.avatar,
                 role: data.role || 'USER'
             }
-        }) as User
+        })
+
+        return {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            password: user.password,
+            avatar: user.avatar || undefined,
+            role: user.role.toLowerCase() as 'admin' | 'user',
+            status: user.status,
+            createdAt: user.createdAt.toISOString(),
+            updatedAt: user.updatedAt.toISOString()
+        }
     },
 
     async getUserInfo(id: number): Promise<UserInfo | null> {
@@ -362,7 +400,7 @@ export const userService = {
             username: user.username,
             email: user.email,
             avatar: user.avatar || undefined,
-            role: user.role,
+            role: user.role.toLowerCase(),
             createdAt: user.createdAt.toISOString()
         }
     }
