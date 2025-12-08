@@ -18,17 +18,23 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { getArticleList } from '@/api/article'
 
 const router = useRouter()
 const articles = ref<any[]>([])
 
-const fetchData = () => {
-  articles.value = Array.from({ length: 12 }, (_, i) => ({
-    id: i + 1,
-    title: `娱乐资讯 ${i + 1}`,
-    summary: '最新娱乐八卦，明星动态一网打尽',
-    cover: `https://picsum.photos/300/200?random=${i + 300}`
-  }))
+const fetchData = async () => {
+  try {
+    // 获取娱乐分类的文章 (categoryId = 7)
+    const result = await getArticleList({
+      page: 1,
+      pageSize: 12,
+      categoryId: 7
+    })
+    articles.value = result.list || []
+  } catch (error) {
+    console.error('获取娱乐数据失败:', error)
+  }
 }
 
 const goToDetail = (id: number) => {

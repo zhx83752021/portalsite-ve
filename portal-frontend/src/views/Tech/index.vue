@@ -34,18 +34,24 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { getArticleList } from '@/api/article'
 
 const router = useRouter()
 const articles = ref<any[]>([])
 const topics = ref(['AI', '5G', '云计算', '物联网', '区块链', '量子计算', '元宇宙', '自动驾驶'])
 
-const fetchData = () => {
-  articles.value = Array.from({ length: 10 }, (_, i) => ({
-    id: i + 1,
-    title: `科技新闻 ${i + 1} - 前沿技术解析`,
-    summary: '深入探讨最新科技发展趋势和技术创新。',
-    cover: `https://picsum.photos/400/250?random=${i + 400}`
-  }))
+const fetchData = async () => {
+  try {
+    // 获取科技分类的文章 (categoryId = 8)
+    const result = await getArticleList({
+      page: 1,
+      pageSize: 10,
+      categoryId: 8
+    })
+    articles.value = result.list || []
+  } catch (error) {
+    console.error('获取科技数据失败:', error)
+  }
 }
 
 const goToDetail = (id: number) => {

@@ -38,19 +38,24 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { getArticleList } from '@/api/article'
 
 const router = useRouter()
 const articles = ref<any[]>([])
 const matches = ref<any[]>([])
 
-const fetchData = () => {
-  articles.value = Array.from({ length: 10 }, (_, i) => ({
-    id: i + 1,
-    title: `体育新闻 ${i + 1} - 精彩赛事回顾`,
-    summary: '本场比赛精彩纷呈，双方球员都展现出了极高的竞技水平。',
-    cover: `https://picsum.photos/400/250?random=${i + 200}`,
-    createdAt: new Date().toISOString()
-  }))
+const fetchData = async () => {
+  try {
+    // 获取体育分类的文章 (categoryId = 6)
+    const result = await getArticleList({
+      page: 1,
+      pageSize: 10,
+      categoryId: 6
+    })
+    articles.value = result.list || []
+  } catch (error) {
+    console.error('获取体育数据失败:', error)
+  }
 
   matches.value = Array.from({ length: 5 }, (_, i) => ({
     id: i + 1,

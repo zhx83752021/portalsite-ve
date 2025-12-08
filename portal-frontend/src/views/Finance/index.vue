@@ -92,26 +92,32 @@ const marketData = ref([
   { code: 'usd', name: '美元指数', value: '103.45', change: -0.12 }
 ])
 
+import { getArticleList } from '@/api/article'
+
 const articles = ref<any[]>([])
 const hotArticles = ref<any[]>([])
 
-const fetchData = () => {
-  // 模拟数据
-  const mockList = Array.from({ length: 10 }, (_, i) => ({
-    id: i + 1,
-    title: `财经新闻标题 ${i + 1} - 市场动态分析与展望`,
-    summary: '本文深入分析当前市场形势，为投资者提供专业的财经资讯和投资建议。',
-    cover: i % 2 === 0 ? `https://picsum.photos/400/250?random=${i + 100}` : undefined,
-    views: Math.floor(Math.random() * 5000),
-    createdAt: new Date(Date.now() - Math.random() * 86400000 * 3).toISOString()
-  }))
-  articles.value = mockList
+const fetchData = async () => {
+  try {
+    // 获取财经分类的文章 (categoryId = 5)
+    const result = await getArticleList({
+      page: 1,
+      pageSize: 10,
+      categoryId: 5
+    })
+    articles.value = result.list || []
 
-  hotArticles.value = Array.from({ length: 8 }, (_, i) => ({
-    id: i + 20,
-    title: `热门财经资讯 ${i + 1}`,
-    views: 5000 - i * 100
-  }))
+    // 热门文章：按浏览量排序
+    const hotResult = await getArticleList({
+      page: 1,
+      pageSize: 8,
+      categoryId: 5,
+      sort: 'views'
+    })
+    hotArticles.value = hotResult.list || []
+  } catch (error) {
+    console.error('获取财经数据失败:', error)
+  }
 }
 
 const formatTime = (time: string) => {
