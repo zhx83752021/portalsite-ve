@@ -1,47 +1,39 @@
 # 多阶段构建
-# 阶段1: 构建
-FROM node:18-alpine AS builder
+# 阶段1: 构建（需要完整依赖，包含 TypeScript、Prisma CLI 等）
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# 复制package文件
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# 安装依赖
-RUN npm ci --only=production && \
-    npm cache clean --force
+# 安装全部依赖（含 devDependencies）
+RUN npm ci
 
-# 复制源代码
+# 复制源代码并构建
 COPY . .
-
-# 生成Prisma Client
 RUN npx prisma generate
-
-# 构建TypeScript
 RUN npm run build
 
-# 阶段2: 生产运行
-FROM node:18-alpine
+# 阶段2: 生产运行（只保留运行时所需）
+FROM node:20-alpine
 
 WORKDIR /app
+ENV NODE_ENV=production
 
-# 安装生产依赖
 COPY package*.json ./
-RUN npm ci --only=production && \
-    npm cache clean --force
+COPY prisma ./prisma/
 
-# 复制构建产物和Prisma
+# 仅装生产依赖；--ignore-scripts 跳过 postinstall 里的 `prisma generate`
+# （prisma CLI 在 devDeps，生产镜像不装；生成好的 client 从 builder 拷过来）
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-# 暴露端口
 EXPOSE 3000
 
-# 健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# 启动应用
-CMD ["node", "dist/app.js"]
+CMD ["node", "dist/server.js"]
