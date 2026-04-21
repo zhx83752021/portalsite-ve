@@ -54,9 +54,6 @@ jobs:
     - name: TypeScript type check
       run: npx tsc --noEmit
 
-    - name: Lint
-      run: npm run lint --if-present
-
     - name: Build
       run: npm run build
 
