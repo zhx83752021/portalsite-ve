@@ -79,7 +79,22 @@
           <router-link v-for="ch in channels" :key="ch.slug" :to="ch.path" class="ch-card"
             :style="{ '--ch-from': ch.from, '--ch-to': ch.to }">
             <div class="ch-media">
-              <CategoryCover :slug="ch.slug" :width="480" :height="300" :show-ruler="true" />
+              <img
+                :src="ch.img"
+                :alt="ch.name"
+                loading="lazy"
+                decoding="async"
+                @error="onChErr"
+              />
+              <CategoryCover
+                :slug="ch.slug"
+                :width="480"
+                :height="300"
+                :show-ruler="true"
+                class="ch-fallback"
+                style="display:none"
+              />
+              <span class="ch-tag">{{ ch.slug.toUpperCase() }}</span>
             </div>
             <div class="ch-body">
               <h3 class="ch-name">{{ ch.name }}</h3>
@@ -141,13 +156,44 @@ const sportsPreview = computed(() => (channelNews.value.sports || []).slice(0, 5
 const techPreview = computed(() => (channelNews.value.tech || []).slice(0, 5))
 
 const channels = [
-  { slug: 'politics', name: '时政', desc: '政策脉络与高层动态', path: '/news?cat=politics', from: '#0A2540', to: '#061A33' },
-  { slug: 'finance', name: '财经', desc: '市场行情与宏观经济', path: '/finance', from: '#0A2540', to: '#C9A961' },
-  { slug: 'international', name: '国际', desc: '全球事件与中外关系', path: '/news?cat=international', from: '#0A2540', to: '#0E4C6E' },
-  { slug: 'tech', name: '科技', desc: '前沿创新与产业观察', path: '/tech', from: '#0A2540', to: '#0E7490' },
-  { slug: 'sports', name: '体育', desc: '顶级赛事与中国力量', path: '/sports', from: '#0A2540', to: '#C0392B' },
-  { slug: 'entertainment', name: '娱乐', desc: '文化、艺术与大众视野', path: '/entertainment', from: '#C0392B', to: '#C9A961' },
+  {
+    slug: 'politics', name: '时政', desc: '政策脉络与高层动态', path: '/news?cat=politics',
+    from: '#0A2540', to: '#061A33',
+    img: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=960&q=70',
+  },
+  {
+    slug: 'finance', name: '财经', desc: '市场行情与宏观经济', path: '/finance',
+    from: '#0A2540', to: '#C9A961',
+    img: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=960&q=70',
+  },
+  {
+    slug: 'international', name: '国际', desc: '全球事件与中外关系', path: '/news?cat=international',
+    from: '#0A2540', to: '#0E4C6E',
+    img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=960&q=70',
+  },
+  {
+    slug: 'tech', name: '科技', desc: '前沿创新与产业观察', path: '/tech',
+    from: '#0A2540', to: '#0E7490',
+    img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=960&q=70',
+  },
+  {
+    slug: 'sports', name: '体育', desc: '顶级赛事与中国力量', path: '/sports',
+    from: '#0A2540', to: '#C0392B',
+    img: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=960&q=70',
+  },
+  {
+    slug: 'entertainment', name: '娱乐', desc: '文化、艺术与大众视野', path: '/entertainment',
+    from: '#C0392B', to: '#C9A961',
+    img: 'https://images.unsplash.com/photo-1514306191717-452ec28c7814?auto=format&fit=crop&w=960&q=70',
+  },
 ]
+
+const onChErr = (e: Event) => {
+  const img = e.target as HTMLImageElement
+  img.style.display = 'none'
+  const fallback = img.nextElementSibling as HTMLElement | null
+  if (fallback) fallback.style.display = ''
+}
 
 const shortTime = (t: string) => {
   const d = new Date(t)
@@ -512,8 +558,53 @@ onMounted(fetchData)
 }
 
 .ch-media {
+  position: relative;
   aspect-ratio: 16 / 9;
   overflow: hidden;
+  background: linear-gradient(135deg, var(--ch-from, #0A2540), var(--ch-to, #061A33));
+}
+
+.ch-media > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.6s var(--ease, ease);
+  filter: saturate(0.95);
+}
+
+.ch-card:hover .ch-media > img {
+  transform: scale(1.04);
+  filter: saturate(1.05);
+}
+
+.ch-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(10, 37, 64, 0) 55%, rgba(10, 37, 64, 0.55) 100%),
+    linear-gradient(135deg, rgba(10, 37, 64, 0.18), rgba(10, 37, 64, 0.05));
+}
+
+.ch-media .ch-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.ch-tag {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  z-index: 1;
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.22em;
+  color: rgba(255, 255, 255, 0.86);
+  text-transform: uppercase;
 }
 
 .ch-body {

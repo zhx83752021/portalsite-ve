@@ -2,22 +2,18 @@
   <div class="ent-page">
     <div class="container">
 
-      <!-- 页头：编辑部式大字 -->
+      <!-- 页头 -->
       <header class="page-head">
         <div class="crumb">
           <router-link to="/">首页</router-link>
           <span class="sep">/</span>
           <span>娱乐</span>
         </div>
-        <div class="masthead">
-          <div class="mh-left">
-            <h1 class="title">娱乐<br />文化</h1>
-          </div>
-          <div class="mh-right">
-            <p class="sub">影视、音乐、艺术、时尚——记录当代大众文化的流动与转向。</p>
-            <p class="sig">CULTURE · ARTS · LIFESTYLE</p>
-          </div>
+        <div class="head-row">
+          <h1 class="title">娱乐文化</h1>
+          <p class="sub">影视、音乐、艺术、时尚——记录当代大众文化的流动与转向。</p>
         </div>
+        <p class="sig">CULTURE · ARTS · LIFESTYLE</p>
       </header>
 
       <!-- 超大头条（杂志封面式） -->
@@ -127,9 +123,9 @@ onMounted(fetchData)
 
 /* page head */
 .page-head {
-  padding: 40px 0 36px;
+  padding: 32px 0 28px;
   margin-bottom: 40px;
-  border-bottom: 2px solid var(--ink-900);
+  border-bottom: 1px solid var(--line);
 }
 
 .crumb {
@@ -137,7 +133,7 @@ onMounted(fetchData)
   font-size: var(--fs-meta);
   color: var(--ink-400);
   letter-spacing: 0.08em;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   display: flex;
   gap: 8px;
 }
@@ -155,58 +151,47 @@ onMounted(fetchData)
   color: var(--ink-300);
 }
 
-.masthead {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 48px;
-  align-items: end;
-}
-
-@media (max-width: 840px) {
-  .masthead {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
+.head-row {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  flex-wrap: wrap;
 }
 
 .title {
   font-family: var(--font-display);
-  font-size: clamp(56px, 7.2vw, 78px);
-  font-weight: 900;
+  font-size: var(--fs-display-2);
+  font-weight: var(--fw-bold);
   color: var(--ink-900);
   margin: 0;
-  line-height: 0.96;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.015em;
+  position: relative;
+  padding-left: 16px;
 }
 
-@media (max-width: 640px) {
-  .title {
-    font-size: 56px;
-  }
-}
-
-.mh-right {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding-bottom: 12px;
+.title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 4px;
+  background: var(--brand-red);
 }
 
 .sub {
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-style: italic;
-  color: var(--ink-700);
+  font-size: var(--fs-list);
+  color: var(--ink-600);
   margin: 0;
   line-height: 1.7;
 }
 
 .sig {
   font-family: var(--font-mono);
-  font-size: var(--fs-meta);
+  font-size: var(--fs-micro);
   letter-spacing: 0.24em;
   color: var(--brand-red);
-  margin: 0;
+  margin: 10px 0 0;
 }
 
 /* cover hero */
