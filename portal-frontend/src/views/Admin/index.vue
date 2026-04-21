@@ -4,10 +4,13 @@
       <!-- 侧边栏 -->
       <el-aside :width="isCollapse ? '64px' : '240px'" class="admin-aside">
         <div class="logo-container">
-          <el-icon v-if="!isCollapse" :size="32" color="#409EFF">
-            <Management />
-          </el-icon>
-          <h2 v-if="!isCollapse">后台管理</h2>
+          <div class="logo-seal" :class="{ 'is-collapsed': isCollapse }">
+            <span class="seal-mark">新</span>
+          </div>
+          <div v-if="!isCollapse" class="logo-text">
+            <h2>中央新闻</h2>
+            <span class="logo-sub">CONTENT&nbsp;CONSOLE</span>
+          </div>
         </div>
 
         <el-menu :default-active="activeMenu" :collapse="isCollapse" :collapse-transition="false" router
@@ -277,39 +280,86 @@ const handleLogout = () => {
 
 /* 侧边栏样式 */
 .admin-aside {
-  background-color: #001529;
+  background-color: var(--brand-navy-900);
   transition: width 0.3s;
   overflow-x: hidden;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .logo-container {
   display: flex;
   align-items: center;
-  justify-content: center;
-  height: 64px;
+  height: 72px;
   padding: 0 16px;
   color: #fff;
   gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
 }
 
-.logo-container h2 {
+.logo-container::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--brand-red);
+}
+
+.logo-seal {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brand-red);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: 20px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(197, 32, 44, 0.35);
+}
+
+.logo-seal.is-collapsed {
+  margin: 0 auto;
+}
+
+.logo-text h2 {
   margin: 0;
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 16px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.05em;
   white-space: nowrap;
+  font-family: var(--font-display);
+  color: #fff;
+}
+
+.logo-text .logo-sub {
+  display: block;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: var(--font-en);
+  margin-top: 2px;
 }
 
 .admin-menu {
   border: none;
-  background-color: #001529;
+  background-color: var(--brand-navy-900);
 }
 
 /* 去掉所有菜单项的边框和分隔线 */
 .admin-menu :deep(.el-menu-item) {
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.7);
   border: none !important;
   border-bottom: none !important;
   border-top: none !important;
+  font-size: 14px;
+  height: 48px;
+  line-height: 48px;
 }
 
 .admin-menu :deep(.el-menu-item::before),
@@ -317,11 +367,18 @@ const handleLogout = () => {
   display: none !important;
 }
 
-.admin-menu :deep(.el-menu-item:hover),
+.admin-menu :deep(.el-menu-item:hover) {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  border: none !important;
+}
+
 .admin-menu :deep(.el-menu-item.is-active) {
   color: #fff;
-  background-color: #1890ff !important;
+  background-color: rgba(197, 32, 44, 0.15) !important;
   border: none !important;
+  border-left: 3px solid var(--brand-red) !important;
+  padding-left: calc(var(--space-5) - 3px) !important;
 }
 
 .admin-menu :deep(.el-sub-menu) {
@@ -329,9 +386,12 @@ const handleLogout = () => {
 }
 
 .admin-menu :deep(.el-sub-menu__title) {
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.7);
   border: none !important;
   border-bottom: none !important;
+  font-size: 14px;
+  height: 48px;
+  line-height: 48px;
 }
 
 .admin-menu :deep(.el-sub-menu__title::before),
@@ -341,17 +401,18 @@ const handleLogout = () => {
 
 .admin-menu :deep(.el-sub-menu__title:hover) {
   color: #fff;
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: rgba(255, 255, 255, 0.06) !important;
   border: none !important;
 }
 
 /* 子菜单项样式 */
 .admin-menu :deep(.el-sub-menu .el-menu-item) {
-  background-color: #000c17 !important;
+  background-color: rgba(0, 0, 0, 0.22) !important;
   min-width: 0;
   border: none !important;
   border-bottom: none !important;
   border-top: none !important;
+  font-size: 13px;
 }
 
 .admin-menu :deep(.el-sub-menu .el-menu-item::before),
@@ -360,13 +421,16 @@ const handleLogout = () => {
 }
 
 .admin-menu :deep(.el-sub-menu .el-menu-item:hover) {
-  background-color: #1890ff !important;
+  background-color: rgba(255, 255, 255, 0.04) !important;
   border: none !important;
 }
 
 .admin-menu :deep(.el-sub-menu .el-menu-item.is-active) {
-  background-color: #1890ff !important;
+  background-color: rgba(197, 32, 44, 0.18) !important;
+  color: #fff !important;
   border: none !important;
+  border-left: 3px solid var(--brand-red) !important;
+  padding-left: calc(var(--space-7) - 3px) !important;
 }
 
 /* 确保子菜单容器也没有边框 */
@@ -375,7 +439,7 @@ const handleLogout = () => {
 }
 
 .admin-menu :deep(.el-menu--inline) {
-  background-color: #000c17 !important;
+  background-color: rgba(0, 0, 0, 0.22) !important;
 }
 
 /* 顶部导航栏样式 */
@@ -384,8 +448,9 @@ const handleLogout = () => {
   align-items: center;
   justify-content: space-between;
   background-color: #fff;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--line-200);
   padding: 0 20px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
 }
 
 .header-left {
@@ -396,42 +461,54 @@ const handleLogout = () => {
 .collapse-icon {
   font-size: 20px;
   cursor: pointer;
-  transition: color 0.3s;
+  transition: color 0.2s;
+  color: var(--ink-600);
 }
 
 .collapse-icon:hover {
-  color: #409EFF;
+  color: var(--brand-navy);
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
+}
+
+.header-right :deep(.el-button.is-text) {
+  color: var(--ink-700);
+  font-size: 13px;
+}
+
+.header-right :deep(.el-button.is-text:hover) {
+  color: var(--brand-navy);
+  background-color: var(--mist-50);
 }
 
 .admin-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 4px;
-  transition: background-color 0.3s;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s;
 }
 
 .admin-info:hover {
-  background-color: #f5f5f5;
+  background-color: var(--mist-50);
 }
 
 .admin-name {
-  font-size: 14px;
-  color: #303133;
+  font-size: 13px;
+  color: var(--ink-800);
+  font-weight: var(--fw-medium);
 }
 
 /* 主内容区域样式 */
 .admin-main {
-  background-color: #f0f2f5;
-  padding: 20px;
+  background-color: var(--mist-50);
+  padding: 24px;
   overflow-y: auto;
 }
 

@@ -5,12 +5,16 @@ import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import App from './App.vue'
 import router from './router'
+
+// 设计系统：顺序不可错
+import './styles/tokens.css'
+import './styles/element-overrides.css'
+import './styles/typography.css'
 import './styles/index.css'
 
 const app = createApp(App)
 const pinia = createPinia()
 
-// 注册所有Element Plus图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component)
 }

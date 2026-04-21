@@ -1,0 +1,115 @@
+/**
+ * Element Plus 主题覆盖 — 把默认蓝/紫全部指向 modern-gov 的深海蓝
+ */
+
+:root {
+  --el-color-primary: #0a2540;
+  --el-color-primary-light-3: #2d4a6b;
+  --el-color-primary-light-5: #5e7a96;
+  --el-color-primary-light-7: #9badc2;
+  --el-color-primary-light-8: #c0cdd9;
+  --el-color-primary-light-9: #e1e8ef;
+  --el-color-primary-dark-2: #061a33;
+
+  --el-color-danger: #c0392b;
+  --el-color-danger-light-3: #d06357;
+  --el-color-danger-light-5: #e08c83;
+  --el-color-danger-light-7: #efb5ae;
+  --el-color-danger-light-9: #f8e0dc;
+
+  --el-color-success: #16a34a;
+  --el-color-warning: #d97706;
+  --el-color-info: #475569;
+
+  --el-text-color-primary: #0f172a;
+  --el-text-color-regular: #475569;
+  --el-text-color-secondary: #94a3b8;
+  --el-text-color-placeholder: #cbd5e1;
+
+  --el-border-color: #e2e8f0;
+  --el-border-color-light: #e2e8f0;
+  --el-border-color-lighter: #f1f5f9;
+  --el-border-color-extra-light: #f8fafc;
+
+  --el-fill-color-blank: #ffffff;
+  --el-bg-color-page: #f8fafc;
+
+  --el-border-radius-base: 4px;
+  --el-border-radius-small: 2px;
+
+  --el-font-family: var(--font-body);
+  --el-font-size-base: var(--fs-body);
+  --el-font-size-extra-small: var(--fs-micro);
+  --el-font-size-small: var(--fs-meta);
+  --el-font-size-large: var(--fs-h4);
+}
+
+/* 按钮方正化 */
+.el-button {
+  border-radius: var(--radius-sm);
+  font-weight: var(--fw-medium);
+}
+
+.el-button--large {
+  border-radius: var(--radius-sm);
+  padding: 12px 28px;
+}
+
+/* 标签去渐变去圆角 */
+.el-tag {
+  border-radius: var(--radius-xs);
+  font-weight: var(--fw-medium);
+}
+
+.el-tag--info {
+  color: var(--ink-600);
+  background: var(--mist-100);
+  border-color: var(--line);
+}
+
+/* 输入框统一 */
+.el-input__wrapper {
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 1px var(--line) inset !important;
+}
+
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--brand-navy) inset !important;
+}
+
+/* 卡片极简化 */
+.el-card {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+
+/* 表格样式 */
+.el-table th.el-table__cell {
+  background: var(--mist-100);
+  color: var(--ink-900);
+  font-weight: var(--fw-medium);
+}
+
+/* Message / Notification */
+.el-message {
+  border-radius: var(--radius-sm);
+}
+
+/* 菜单 / Dropdown */
+.el-menu--horizontal > .el-menu-item.is-active {
+  color: var(--brand-navy);
+}
+
+/* 分页 */
+.el-pagination.is-background .el-pager li.is-active {
+  background-color: var(--brand-navy) !important;
+  color: #fff !important;
+}
+
+/* focus-visible 统一 */
+*:focus-visible {
+  outline: 2px solid var(--brand-red);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}

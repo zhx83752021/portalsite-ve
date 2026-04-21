@@ -1,0 +1,64 @@
+/**
+ * 字体加载：Inter（西文辅助）· IBM Plex Sans（等宽数据）
+ * 中文标题与正文以 tokens 中的「微软雅黑」等系统字体为主
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+html,
+body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--ink-600);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+.display {
+  font-family: var(--font-display);
+  color: var(--ink-900);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+h4,
+h5,
+h6 {
+  font-family: var(--font-body);
+  color: var(--ink-900);
+  font-weight: var(--fw-medium);
+  line-height: 1.35;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum' on, 'lnum' on;
+}
+
+.text-meta {
+  font-size: var(--fs-meta);
+  color: var(--ink-400);
+}
+
+.text-eyebrow {
+  font-family: var(--font-body);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brand-red);
+  font-weight: var(--fw-medium);
+}

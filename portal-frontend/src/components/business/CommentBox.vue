@@ -48,8 +48,7 @@
                     </div>
                     <div class="comment-text">{{ comment.content }}</div>
                     <div class="comment-actions">
-                        <el-button text size="small" @click="likeComment(comment.id)"
-                            :class="{ 'liked': comment.isLiked }">
+                        <el-button text size="small" @click="likeComment(comment.id)">
                             <el-icon>
                                 <Star />
                             </el-icon>
@@ -105,22 +104,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ChatDotRound, Star } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-
-interface Comment {
-    id: number
-    username: string
-    userAvatar?: string
-    content: string
-    likes: number
-    createdAt: string
-    isLiked?: boolean
-    replies?: Comment[]
-}
+import { getArticleComments, postArticleComment, type ArticleComment } from '@/api/article'
 
 interface Props {
     articleId: number
@@ -131,14 +120,14 @@ const props = defineProps<Props>()
 const router = useRouter()
 const userStore = useUserStore()
 
-const comments = ref<Comment[]>([])
+const comments = ref<ArticleComment[]>([])
 const total = ref(0)
 const commentText = ref('')
 const replyText = ref('')
 const replyingTo = ref<number | null>(null)
 const submitting = ref(false)
 const loading = ref(false)
-const hasMore = ref(true)
+const hasMore = ref(false)
 const page = ref(1)
 const pageSize = 20
 
@@ -149,38 +138,17 @@ const userAvatar = computed(() => userStore.userInfo?.avatar)
 const fetchComments = async () => {
     loading.value = true
     try {
-        // 这里应该调用API获取评论
-        // const response = await getComments(props.articleId, page.value, pageSize)
-        // 模拟数据
-        await new Promise(resolve => setTimeout(resolve, 500))
-        const mockComments: Comment[] = Array.from({ length: 5 }, (_, i) => ({
-            id: i + 1,
-            username: `用户${i + 1}`,
-            userAvatar: undefined,
-            content: `这是第${i + 1}条评论内容，非常精彩的文章，受益匪浅！`,
-            likes: Math.floor(Math.random() * 100),
-            createdAt: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
-            isLiked: false,
-            replies: i === 0 ? [
-                {
-                    id: 100,
-                    username: '回复者',
-                    content: '非常同意你的观点！',
-                    likes: 5,
-                    createdAt: new Date().toISOString()
-                }
-            ] : []
-        }))
-
+        const data = await getArticleComments(props.articleId, page.value, pageSize)
+        const list = data.list || []
         if (page.value === 1) {
-            comments.value = mockComments
+            comments.value = list
         } else {
-            comments.value.push(...mockComments)
+            comments.value.push(...list)
         }
-
-        total.value = mockComments.length
-        hasMore.value = mockComments.length >= pageSize
-    } catch (error) {
+        total.value = data.total
+        hasMore.value = comments.value.length < data.total
+    } catch {
+        if (page.value === 1) comments.value = []
         ElMessage.error('获取评论失败')
     } finally {
         loading.value = false
@@ -195,29 +163,13 @@ const submitComment = async () => {
 
     submitting.value = true
     try {
-        // 这里应该调用API提交评论
-        // await createComment({ articleId: props.articleId, content: commentText.value })
-
-        await new Promise(resolve => setTimeout(resolve, 500))
-
-        // 模拟添加评论
-        const newComment: Comment = {
-            id: Date.now(),
-            username: username.value || '当前用户',
-            userAvatar: userAvatar.value,
-            content: commentText.value,
-            likes: 0,
-            createdAt: new Date().toISOString(),
-            isLiked: false,
-            replies: []
-        }
-
-        comments.value.unshift(newComment)
-        total.value++
+        await postArticleComment(props.articleId, { content: commentText.value.trim() })
         commentText.value = ''
-        ElMessage.success('评论发表成功')
-    } catch (error) {
-        ElMessage.error('评论发表失败')
+        ElMessage.success('提交成功，审核通过后公开展示')
+        page.value = 1
+        await fetchComments()
+    } catch (e: any) {
+        ElMessage.error(e?.message || '评论发表失败')
     } finally {
         submitting.value = false
     }
@@ -236,49 +188,36 @@ const cancelReply = () => {
     replyText.value = ''
 }
 
-const submitReply = async (commentId: number) => {
+const submitReply = async (parentId: number) => {
     if (!replyText.value.trim()) {
         ElMessage.warning('请输入回复内容')
         return
     }
 
+    submitting.value = true
     try {
-        // 这里应该调用API提交回复
-        await new Promise(resolve => setTimeout(resolve, 500))
-
-        // 模拟添加回复
-        const comment = comments.value.find(c => c.id === commentId)
-        if (comment) {
-            if (!comment.replies) comment.replies = []
-            comment.replies.push({
-                id: Date.now(),
-                username: username.value || '当前用户',
-                userAvatar: userAvatar.value,
-                content: replyText.value,
-                likes: 0,
-                createdAt: new Date().toISOString()
-            })
-        }
-
+        await postArticleComment(props.articleId, {
+            content: replyText.value.trim(),
+            parentId,
+        })
         replyText.value = ''
         replyingTo.value = null
-        ElMessage.success('回复成功')
-    } catch (error) {
-        ElMessage.error('回复失败')
+        ElMessage.success('提交成功，审核通过后公开展示')
+        page.value = 1
+        await fetchComments()
+    } catch (e: any) {
+        ElMessage.error(e?.message || '回复失败')
+    } finally {
+        submitting.value = false
     }
 }
 
-const likeComment = async (commentId: number) => {
+const likeComment = async (_commentId: number) => {
     if (!isLoggedIn.value) {
         goToLogin()
         return
     }
-
-    const comment = comments.value.find(c => c.id === commentId)
-    if (comment) {
-        comment.isLiked = !comment.isLiked
-        comment.likes += comment.isLiked ? 1 : -1
-    }
+    ElMessage.info('点赞功能将后续接入')
 }
 
 const loadMore = () => {
@@ -305,6 +244,14 @@ const formatTime = (time: string) => {
 const goToLogin = () => {
     router.push('/login')
 }
+
+watch(
+    () => props.articleId,
+    () => {
+        page.value = 1
+        fetchComments()
+    },
+)
 
 onMounted(() => {
     fetchComments()
@@ -394,7 +341,7 @@ onMounted(() => {
 }
 
 .time {
-    font-size: 12px;
+    font-size: var(--fs-meta);
     color: #909399;
 }
 

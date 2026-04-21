@@ -131,22 +131,7 @@ const handleRegister = async () => {
       ElMessage.success('注册成功')
       router.push('/')
     } catch (error: any) {
-      // 模拟注册成功（开发环境）
-      if (error.message?.includes('Failed to fetch') || error.message?.includes('Network')) {
-        const mockUser = {
-          id: Date.now(),
-          username: registerForm.username,
-          email: registerForm.email,
-          avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${registerForm.username}`,
-          role: 'user'
-        }
-        const mockToken = 'mock-token-' + Date.now()
-        userStore.login(mockUser, mockToken)
-        ElMessage.success('注册成功（模拟）')
-        router.push('/')
-      } else {
-        ElMessage.error(error.message || '注册失败')
-      }
+      ElMessage.error(error.message || '注册失败')
     } finally {
       loading.value = false
     }
@@ -160,7 +145,18 @@ const handleRegister = async () => {
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 200px);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-navy-900) 100%);
+  position: relative;
+}
+
+.register-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--brand-red);
 }
 
 .register-container {
@@ -170,29 +166,34 @@ const handleRegister = async () => {
 }
 
 .register-card {
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 40px rgba(6, 26, 51, 0.4);
+  border-radius: var(--radius-md);
+  border: none;
 }
 
 .card-header h2 {
   margin: 0;
   text-align: center;
-  color: #303133;
+  color: var(--ink-900);
+  font-family: var(--font-display);
 }
 
 .register-footer {
   text-align: center;
   margin-top: 20px;
   font-size: 14px;
-  color: #606266;
+  color: var(--ink-600);
 }
 
 .register-footer a {
-  color: #409EFF;
+  color: var(--brand-navy);
   text-decoration: none;
   margin-left: 5px;
+  font-weight: var(--fw-medium);
 }
 
 .register-footer a:hover {
+  color: var(--brand-red);
   text-decoration: underline;
 }
 </style>

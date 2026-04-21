@@ -1,173 +1,221 @@
 <template>
   <header class="site-header">
-    <!-- 顶部栏 -->
+    <!-- 顶部条：深蓝 · 日期 · 指数 · 天气 -->
     <div class="top-bar">
-      <div class="container">
-        <div class="top-bar-content">
-          <div class="top-left">
-            <span class="welcome-text">欢迎访问综合门户网站</span>
-            <span class="divider">|</span>
-            <a href="#" class="top-link">设为首页</a>
-            <span class="divider">|</span>
-            <a href="#" class="top-link">加入收藏</a>
-          </div>
-          <div class="top-right">
-            <span class="date-time">{{ currentDateTime }}</span>
-          </div>
+      <div class="container top-bar-inner">
+        <div class="top-left">
+          <span class="brand-mark">CLM · 综合门户</span>
+          <span class="dot">·</span>
+          <span class="date-time">{{ currentDateTime }}</span>
+        </div>
+        <div class="top-right">
+          <span class="idx">
+            <span class="idx-name">上证</span>
+            <span class="idx-val">{{ idx.sh.val }}</span>
+            <span class="idx-chg" :class="idx.sh.dir">{{ idx.sh.chg }}</span>
+          </span>
+          <span class="idx">
+            <span class="idx-name">深证</span>
+            <span class="idx-val">{{ idx.sz.val }}</span>
+            <span class="idx-chg" :class="idx.sz.dir">{{ idx.sz.chg }}</span>
+          </span>
+          <span class="idx weather">
+            <el-icon>
+              <Sunny />
+            </el-icon> 晴 12°C
+          </span>
         </div>
       </div>
     </div>
-    <!-- 主导航 -->
+
+    <!-- 主品牌区：方印 · 标题 · 搜索 -->
     <div class="main-header">
-      <div class="container">
-        <div class="header-content">
-          <!-- Logo -->
-          <div class="logo">
-            <router-link to="/">
-              <div class="logo-icon">
-                <el-icon :size="40">
-                  <House />
-                </el-icon>
-              </div>
-              <div class="logo-info">
-                <h1 class="logo-text">综合门户</h1>
-                <p class="logo-subtitle">PORTAL WEBSITE</p>
-              </div>
-            </router-link>
+      <div class="container header-content">
+        <router-link to="/" class="logo">
+          <div class="logo-seal" aria-hidden="true">门</div>
+          <div class="logo-info">
+            <h1 class="logo-title">综合门户</h1>
+            <p class="logo-sub">COMPREHENSIVE · PORTAL</p>
           </div>
-          <!-- 搜索框 -->
-          <div class="header-search" v-if="!isMobile">
-            <el-input v-model="searchKeyword" placeholder="请输入关键词搜索..." :prefix-icon="Search"
-              @keyup.enter="handleSearch" clearable size="large" class="search-input">
-              <template #append>
-                <el-button @click="handleSearch" type="primary">搜索</el-button>
-              </template>
-            </el-input>
-            <div class="hot-keywords">
-              <span class="keywords-label">热搜：</span>
-              <a href="#" class="keyword-item" v-for="keyword in hotKeywords" :key="keyword"
-                @click.prevent="searchByKeyword(keyword)">
-                {{ keyword }}
-              </a>
-            </div>
+        </router-link>
+
+        <div class="header-search" v-if="!isMobile">
+          <div class="search-box" :class="{ focus: searchFocus }">
+            <el-icon class="search-ico">
+              <Search />
+            </el-icon>
+            <input v-model="searchKeyword" class="search-input" placeholder="搜索新闻、财经、体育……"
+              @focus="searchFocus = true" @blur="searchFocus = false" @keyup.enter="handleSearch" />
+            <button class="search-btn" type="button" @click="handleSearch">搜索</button>
           </div>
-          <!-- 移动端菜单按钮 -->
-          <div class="user-area">
-            <el-button v-if="isMobile" :icon="Menu" circle @click="toggleMobileMenu" class="mobile-menu-btn" />
+          <div class="hot-keywords">
+            <span class="eyebrow">热搜</span>
+            <a v-for="keyword in hotKeywords" :key="keyword" href="#" class="keyword"
+              @click.prevent="searchByKeyword(keyword)">
+              {{ keyword }}
+            </a>
           </div>
+        </div>
+
+        <div class="user-area">
+          <el-button v-if="isMobile" :icon="Menu" circle @click="toggleMobileMenu" class="mobile-menu-btn" />
         </div>
       </div>
     </div>
-    <!-- 导航菜单 -->
+
+    <!-- 主导航：下划线 hover -->
     <nav class="nav-bar" v-if="!isMobile">
-      <div class="container">
-        <el-menu :default-active="activeMenu" mode="horizontal" router :ellipsis="false" class="main-nav">
-          <el-menu-item index="/">首页</el-menu-item>
-          <el-menu-item index="/news">新闻</el-menu-item>
-          <el-menu-item index="/finance">财经</el-menu-item>
-          <el-menu-item index="/sports">体育</el-menu-item>
-          <el-menu-item index="/entertainment">娱乐</el-menu-item>
-          <el-menu-item index="/tech">科技</el-menu-item>
-        </el-menu>
+      <div class="container nav-inner">
+        <router-link
+          v-for="item in navItems"
+          :key="item.name"
+          :to="item.to"
+          class="nav-link"
+          :class="{ active: isNavItemActive(item) }"
+        >
+          {{ item.name }}
+        </router-link>
+        <span class="nav-spacer" />
+        <a href="/admin/login" class="nav-admin" aria-label="后台管理入口">
+          <el-icon>
+            <Setting />
+          </el-icon> 管理
+        </a>
       </div>
     </nav>
-    <!-- 移动端抽屉菜单 -->
-    <el-drawer v-model="mobileMenuVisible" direction="rtl" size="70%" title="菜单">
-      <el-menu :default-active="activeMenu" router @select="mobileMenuVisible = false">
-        <el-menu-item index="/">首页</el-menu-item>
-        <el-menu-item index="/news">新闻</el-menu-item>
-        <el-menu-item index="/finance">财经</el-menu-item>
-        <el-menu-item index="/sports">体育</el-menu-item>
-        <el-menu-item index="/entertainment">娱乐</el-menu-item>
-        <el-menu-item index="/tech">科技</el-menu-item>
-      </el-menu>
-      <div class="mobile-search">
+
+    <!-- 移动端抽屉 -->
+    <el-drawer v-model="mobileMenuVisible" direction="rtl" size="72%" title="导航">
+      <div class="m-nav">
+        <router-link v-for="item in navItems" :key="item.name" :to="item.to" class="m-nav-link"
+          @click="mobileMenuVisible = false">
+          {{ item.name }}
+        </router-link>
+      </div>
+      <div class="m-search">
         <el-input v-model="searchKeyword" placeholder="搜索..." :prefix-icon="Search" @keyup.enter="handleSearch" />
       </div>
     </el-drawer>
   </header>
 </template>
+
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
-import { Search, Menu, House } from '@element-plus/icons-vue'
+import { Search, Menu, Sunny, Setting } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import type { RouteLocationRaw } from 'vue-router'
 
 const router = useRouter()
 const route = useRoute()
 const appStore = useAppStore()
+
 const searchKeyword = ref('')
+const searchFocus = ref(false)
 const mobileMenuVisible = ref(false)
 const currentDateTime = ref('')
-const hotKeywords = ref(['最新资讯', '热点新闻', '财经动态', '体育赛事', '科技创新'])
+
+const hotKeywords = ref(['两会', '央行政策', '奥运', 'AI 大模型', '新能源'])
+
+interface NavItem {
+  name: string
+  to: RouteLocationRaw
+  activeMatch: 'home' | 'news' | 'finance' | 'tech' | 'sports' | 'entertainment'
+}
+
+const navItems: NavItem[] = [
+  { name: '首页', to: '/', activeMatch: 'home' },
+  { name: '新闻中心', to: '/news', activeMatch: 'news' },
+  { name: '财经', to: '/finance', activeMatch: 'finance' },
+  { name: '科技', to: '/tech', activeMatch: 'tech' },
+  { name: '体育', to: '/sports', activeMatch: 'sports' },
+  { name: '娱乐', to: '/entertainment', activeMatch: 'entertainment' },
+]
+
+const idx = ref({
+  sh: { val: '3213.54', chg: '+0.52%', dir: 'up' },
+  sz: { val: '10542.11', chg: '-0.13%', dir: 'down' },
+})
 
 const isMobile = computed(() => appStore.isMobile)
-const activeMenu = computed(() => route.path)
-// 更新日期时间
+
+const isNavItemActive = (item: NavItem) => {
+  const p = route.path
+  switch (item.activeMatch) {
+    case 'home':
+      return p === '/'
+    case 'news':
+      return p === '/news' || p.startsWith('/news/')
+    case 'finance':
+      return p === '/finance' || p.startsWith('/finance/')
+    case 'tech':
+      return p === '/tech' || p.startsWith('/tech/')
+    case 'sports':
+      return p === '/sports' || p.startsWith('/sports/')
+    case 'entertainment':
+      return p === '/entertainment' || p.startsWith('/entertainment/')
+    default:
+      return false
+  }
+}
+
 const updateDateTime = () => {
   const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  const hours = String(now.getHours()).padStart(2, '0')
-  const minutes = String(now.getMinutes()).padStart(2, '0')
-  const seconds = String(now.getSeconds()).padStart(2, '0')
-  const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
-  const weekDay = weekDays[now.getDay()]
-  currentDateTime.value = `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${weekDay}`
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  currentDateTime.value = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())} ${weekDays[now.getDay()]}`
 }
+
 let timer: number | null = null
 onMounted(() => {
   updateDateTime()
   timer = window.setInterval(updateDateTime, 1000)
 })
 onBeforeUnmount(() => {
-  if (timer) {
-    clearInterval(timer)
-  }
+  if (timer) clearInterval(timer)
 })
+
 const handleSearch = () => {
   if (searchKeyword.value.trim()) {
-    router.push({
-      path: '/news',
-      query: { keyword: searchKeyword.value }
-    })
+    router.push({ path: '/news', query: { keyword: searchKeyword.value } })
     mobileMenuVisible.value = false
   } else {
     ElMessage.warning('请输入搜索关键词')
   }
 }
+
 const searchByKeyword = (keyword: string) => {
   searchKeyword.value = keyword
   handleSearch()
 }
+
 const toggleMobileMenu = () => {
   mobileMenuVisible.value = !mobileMenuVisible.value
 }
 </script>
-<style scoped lang="css">
+
+<style scoped>
 .site-header {
   position: sticky;
   top: 0;
   z-index: 1000;
   background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--line);
 }
 
-/* 顶部栏 - 门户网站风格 */
+/* ============ 顶部条 ============ */
 .top-bar {
-  background: #f5f5f5;
-  color: #666;
-  font-size: 12px;
-  height: 32px;
-  line-height: 32px;
+  background: var(--brand-navy);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: var(--fs-micro);
+  height: 36px;
 }
 
-.top-bar-content {
+.top-bar-inner {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   height: 100%;
 }
 
@@ -175,296 +223,338 @@ const toggleMobileMenu = () => {
 .top-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 
-.welcome-text {
-  color: #666;
-  font-weight: 400;
+.brand-mark {
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  color: #fff;
 }
 
-.divider {
-  color: #ccc;
-  margin: 0 2px;
-}
-
-.top-link {
-  color: #666;
-  text-decoration: none;
-  transition: color 0.2s;
-  font-size: 12px;
-}
-
-.top-link:hover {
-  color: #409EFF;
-  text-decoration: underline;
+.dot {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .date-time {
-  color: #666;
-  font-family: Arial, 'Microsoft YaHei', sans-serif;
-  font-weight: 400;
-  font-size: 12px;
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.78);
+  letter-spacing: 0.02em;
 }
 
-/* 主导航区域 - 政府网站风格 */
+.idx {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-micro);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.idx-name {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.idx-val {
+  color: #fff;
+}
+
+.idx-chg.up {
+  color: #ff6b5b;
+}
+
+.idx-chg.down {
+  color: #5ee1a7;
+}
+
+.idx.weather {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.idx.weather .el-icon {
+  font-size: 14px;
+  color: var(--brand-gold);
+}
+
+/* ============ 主品牌区 ============ */
 .main-header {
   background: #fff;
-  padding: 18px 0;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 20px 0;
 }
 
 .header-content {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 30px;
+  gap: 32px;
 }
 
-/* Logo区域 - 简洁正式 */
 .logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  color: inherit;
   flex-shrink: 0;
 }
 
-.logo a {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  text-decoration: none;
-}
-
-.logo-icon {
-  width: 48px;
-  height: 48px;
-  background: #0066cc;
-  border-radius: 4px;
+.logo-seal {
+  width: 52px;
+  height: 52px;
+  background: var(--brand-navy);
+  color: #fff;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 0;
+  position: relative;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.08);
+}
+
+.logo-seal::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 2px;
+  pointer-events: none;
 }
 
 .logo-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
-.logo-text {
-  font-size: 22px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0;
-  line-height: 1.2;
-  letter-spacing: 0.5px;
-}
-
-.logo-subtitle {
-  font-size: 12px;
-  color: #666;
+.logo-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink-900);
   margin: 0;
   line-height: 1;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-/* 搜索区域 - 扁平化风格 */
+.logo-sub {
+  font-family: var(--font-body);
+  font-size: var(--fs-micro);
+  color: var(--ink-400);
+  margin: 0;
+  line-height: 1;
+  letter-spacing: 0.24em;
+}
+
+/* ============ 搜索 ============ */
 .header-search {
   flex: 1;
-  max-width: 580px;
+  max-width: 520px;
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 8px 14px;
+  border: none;
+  border-bottom: 2px solid var(--line-strong);
+  transition: border-color var(--dur-base) var(--ease);
+}
+
+.search-box.focus {
+  border-bottom-color: var(--brand-navy);
+}
+
+.search-ico {
+  color: var(--ink-400);
+  font-size: 18px;
 }
 
 .search-input {
-  margin-bottom: 6px;
-}
-
-.search-input :deep(.el-input__wrapper) {
-  border-radius: 2px;
-  box-shadow: none;
-  border: 1px solid #dcdfe6;
-  transition: border-color 0.2s;
-}
-
-.search-input :deep(.el-input__wrapper:hover) {
-  border-color: #0066cc;
-}
-
-.search-input :deep(.el-input__wrapper.is-focus) {
-  border-color: #0066cc;
-  box-shadow: none;
-}
-
-.search-input :deep(.el-input-group__append) {
-  padding: 0;
-  background: #0066cc;
+  flex: 1;
   border: none;
-  box-shadow: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--fs-list);
+  font-family: var(--font-body);
+  color: var(--ink-900);
+  padding: 4px 0;
 }
 
-.search-input :deep(.el-input-group__append .el-button) {
-  border-radius: 0;
-  padding: 0 40px;
-  /* background: #0066cc; */
-  border: none;
+.search-input::placeholder {
+  color: var(--ink-400);
+  font-style: italic;
+  font-family: var(--font-display);
+}
+
+.search-btn {
+  background: var(--brand-navy);
   color: #fff;
+  border: none;
+  border-radius: var(--radius-xs);
+  padding: 8px 20px;
+  font-size: var(--fs-meta);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  transition: background var(--dur-fast) var(--ease);
 }
 
-
+.search-btn:hover {
+  background: var(--brand-navy-600);
+}
 
 .hot-keywords {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
-  min-height: 20px;
-  line-height: 20px;
 }
 
-.keywords-label {
-  color: #666;
-  font-size: 12px;
-  line-height: 20px;
-  white-space: nowrap;
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--brand-red);
 }
 
-.keyword-item {
-  color: #333;
-  font-size: 12px;
+.keyword {
+  font-size: var(--fs-meta);
+  color: var(--ink-600);
   text-decoration: none;
-  transition: color 0.2s;
-  line-height: 20px;
-  white-space: nowrap;
+  transition: color var(--dur-fast) var(--ease);
 }
 
-.keyword-item:hover {
-  color: #c8161d;
+.keyword:hover {
+  color: var(--brand-red);
 }
 
-/* 用户区域 - 简洁风格 */
-.user-area {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 5px 12px;
-  border-radius: 2px;
-  transition: background 0.2s;
-}
-
-.user-info:hover {
-  background: #f5f5f5;
-}
-
-.username {
-  font-size: 14px;
-  color: #333;
-  font-weight: 400;
-}
-
-/* 导航栏 - 政府网站蓝色风格 */
+/* ============ 主导航 ============ */
 .nav-bar {
-  background: #0066cc;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border-top: 1px solid var(--line);
+  border-bottom: 2px solid var(--brand-navy);
 }
 
-.main-nav {
-  border-bottom: none;
+.nav-inner {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  height: 48px;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 20px;
+  font-size: var(--fs-list);
+  font-weight: var(--fw-medium);
+  color: var(--ink-900);
+  text-decoration: none;
+  position: relative;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: -2px;
+  height: 3px;
   background: transparent;
+  transition: background var(--dur-base) var(--ease);
 }
 
-.main-nav :deep(.el-menu-item) {
-  color: #fff;
-  border-bottom: none;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 48px;
-  transition: all 0.2s;
-  letter-spacing: 0.5px;
-  margin: 0;
-  padding: 0 28px;
+.nav-link:hover {
+  color: var(--brand-red);
 }
 
-.main-nav :deep(.el-menu-item:hover) {
-  background: rgba(255, 255, 255, 0.1);
+.nav-link:hover::after,
+.nav-link.active::after {
+  background: var(--brand-red);
 }
 
-.main-nav :deep(.el-menu-item.is-active) {
-  background: #004c99;
-  font-weight: 500;
+.nav-link.active {
+  color: var(--brand-navy);
+  font-weight: var(--fw-bold);
 }
 
-.main-nav :deep(.el-menu-item .el-icon) {
-  display: none;
+.nav-spacer {
+  flex: 1;
 }
 
-/* 移动端样式 */
+.nav-admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  font-size: var(--fs-meta);
+  color: var(--ink-600);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.nav-admin:hover {
+  color: var(--brand-red);
+}
+
+/* ============ 移动端 ============ */
 .mobile-menu-btn {
   margin-left: 10px;
 }
 
-.mobile-search {
-  padding: 20px;
-  border-top: 1px solid #eee;
-  margin-top: 20px;
+.m-nav {
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
 }
 
-/* 响应式优化 */
+.m-nav-link {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-body);
+  color: var(--ink-900);
+  text-decoration: none;
+}
+
+.m-nav-link:hover {
+  color: var(--brand-red);
+}
+
+.m-search {
+  padding: 20px 16px;
+}
+
 @media (max-width: 768px) {
   .top-bar {
     display: none;
   }
-
   .main-header {
-    padding: 12px 0;
+    padding: 14px 0;
   }
-
   .header-content {
-    padding: 0 12px;
     gap: 12px;
   }
-
-  .logo-text {
-    font-size: 18px;
+  .logo-title {
+    font-size: var(--fs-h3);
   }
-
-  .logo-subtitle {
-    font-size: 10px;
+  .logo-seal {
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
   }
-
-  .logo-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 4px;
+  .logo-sub {
+    font-size: var(--fs-micro);
   }
-
-  .logo-icon :deep(.el-icon) {
-    font-size: 28px !important;
-  }
-}
-
-/* 平滑过渡动画 */
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.site-header {
-  animation: slideDown 0.4s ease-out;
 }
 </style>

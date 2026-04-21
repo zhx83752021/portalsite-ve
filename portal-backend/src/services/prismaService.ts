@@ -84,6 +84,66 @@ export const articleService = {
     },
 
     /**
+     * 管理端：文章列表（可含草稿/下架，不限于已发布）
+     */
+    async getArticlesAdmin(query: ArticleQueryDTO): Promise<ArticleListResponse> {
+        const page = query.page || 1
+        const pageSize = query.pageSize || 20
+        const skip = (page - 1) * pageSize
+
+        const where: any = {}
+        if (query.status !== undefined && query.status !== -1) {
+            where.status =
+                query.status === 1 ? 'PUBLISHED' : query.status === 0 ? 'DRAFT' : 'ARCHIVED'
+        }
+        if (query.categoryId) where.categoryId = query.categoryId
+        if (query.keyword) {
+            where.OR = [
+                { title: { contains: query.keyword, mode: 'insensitive' as const } },
+                { summary: { contains: query.keyword, mode: 'insensitive' as const } }
+            ]
+        }
+
+        const sortBy = query.sortBy || 'createdAt'
+        const order = query.order || 'desc'
+        const orderBy: any = {}
+        orderBy[sortBy] = order
+
+        const [articles, total] = await Promise.all([
+            prisma.article.findMany({
+                where,
+                include: {
+                    category: { select: { name: true } },
+                    author: { select: { username: true } }
+                },
+                orderBy,
+                skip,
+                take: pageSize
+            }),
+            prisma.article.count({ where })
+        ])
+
+        const list: Article[] = articles.map(article => ({
+            id: article.id,
+            title: article.title,
+            content: article.content,
+            summary: article.summary,
+            cover: article.cover || undefined,
+            categoryId: article.categoryId,
+            categoryName: article.category.name,
+            authorId: article.authorId,
+            authorName: article.author.username,
+            views: article.views,
+            status: article.status === 'PUBLISHED' ? 1 : article.status === 'DRAFT' ? 0 : 2,
+            tags: article.tags,
+            createdAt: article.createdAt.toISOString(),
+            updatedAt: article.updatedAt.toISOString()
+        }))
+
+        return { list, total, page, pageSize }
+    },
+
+    /**
      * 根据ID获取文章
      */
     async getArticleById(id: number): Promise<Article | null> {
@@ -114,6 +174,34 @@ export const articleService = {
             authorId: article.authorId,
             authorName: article.author.username,
             views: article.views + 1,
+            status: article.status === 'PUBLISHED' ? 1 : article.status === 'DRAFT' ? 0 : 2,
+            tags: article.tags,
+            createdAt: article.createdAt.toISOString(),
+            updatedAt: article.updatedAt.toISOString()
+        }
+    },
+
+    /** 管理端编辑用：不增加浏览量 */
+    async getArticleByIdWithoutViewIncrement(id: number): Promise<Article | null> {
+        const article = await prisma.article.findUnique({
+            where: { id },
+            include: {
+                category: { select: { name: true } },
+                author: { select: { username: true } }
+            }
+        })
+        if (!article) return null
+        return {
+            id: article.id,
+            title: article.title,
+            content: article.content,
+            summary: article.summary,
+            cover: article.cover || undefined,
+            categoryId: article.categoryId,
+            categoryName: article.category.name,
+            authorId: article.authorId,
+            authorName: article.author.username,
+            views: article.views,
             status: article.status === 'PUBLISHED' ? 1 : article.status === 'DRAFT' ? 0 : 2,
             tags: article.tags,
             createdAt: article.createdAt.toISOString(),
@@ -315,6 +403,73 @@ export const categoryService = {
             createdAt: category.createdAt.toISOString(),
             updatedAt: category.updatedAt.toISOString()
         }
+    },
+
+    async createCategory(data: {
+        name: string
+        slug: string
+        description?: string
+        parentId?: number
+        sort?: number
+    }): Promise<Category> {
+        const cat = await prisma.category.create({
+            data: {
+                name: data.name,
+                slug: data.slug,
+                description: data.description,
+                parentId: data.parentId,
+                sort: data.sort ?? 0
+            }
+        })
+        return {
+            id: cat.id,
+            name: cat.name,
+            slug: cat.slug,
+            description: cat.description || undefined,
+            parentId: cat.parentId || undefined,
+            sort: cat.sort || undefined,
+            createdAt: cat.createdAt.toISOString(),
+            updatedAt: cat.updatedAt.toISOString()
+        }
+    },
+
+    async updateCategory(
+        id: number,
+        data: Partial<{
+            name: string
+            slug: string
+            description: string | null
+            parentId: number | null
+            sort: number
+        }>
+    ): Promise<Category | null> {
+        try {
+            const cat = await prisma.category.update({
+                where: { id },
+                data
+            })
+            return {
+                id: cat.id,
+                name: cat.name,
+                slug: cat.slug,
+                description: cat.description || undefined,
+                parentId: cat.parentId || undefined,
+                sort: cat.sort || undefined,
+                createdAt: cat.createdAt.toISOString(),
+                updatedAt: cat.updatedAt.toISOString()
+            }
+        } catch {
+            return null
+        }
+    },
+
+    async deleteCategory(id: number): Promise<boolean> {
+        try {
+            await prisma.category.delete({ where: { id } })
+            return true
+        } catch {
+            return false
+        }
     }
 }
 
@@ -426,6 +581,7 @@ export const commentService = {
             prisma.comment.findMany({
                 where,
                 include: {
+                    article: { select: { title: true } },
                     user: { select: { username: true, avatar: true } },
                     replies: {
                         include: {
@@ -443,6 +599,7 @@ export const commentService = {
         const list: Comment[] = comments.map(comment => ({
             id: comment.id,
             articleId: comment.articleId,
+            articleTitle: comment.article?.title,
             userId: comment.userId,
             username: comment.user.username,
             userAvatar: comment.user.avatar || undefined,
@@ -496,6 +653,88 @@ export const commentService = {
             status: 0,
             createdAt: comment.createdAt.toISOString(),
             updatedAt: comment.updatedAt.toISOString()
+        }
+    },
+
+    /** 前台：某篇文章下已通过的评论（顶层 + 已通过回复） */
+    async getApprovedCommentsByArticle(
+        articleId: number,
+        page: number = 1,
+        pageSize: number = 20
+    ): Promise<CommentListResponse> {
+        const skip = (page - 1) * pageSize
+        const where = {
+            articleId,
+            parentId: null as null,
+            status: 'APPROVED' as const
+        }
+
+        const [rows, total] = await Promise.all([
+            prisma.comment.findMany({
+                where,
+                include: {
+                    user: { select: { username: true, avatar: true } },
+                    replies: {
+                        where: { status: 'APPROVED' },
+                        orderBy: { createdAt: 'asc' as const },
+                        include: {
+                            user: { select: { username: true, avatar: true } }
+                        }
+                    }
+                },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: pageSize
+            }),
+            prisma.comment.count({ where })
+        ])
+
+        const list: Comment[] = rows.map(c => this.mapCommentRow(c))
+        return { list, total, page, pageSize }
+    },
+
+    mapCommentRow(comment: any): Comment {
+        return {
+            id: comment.id,
+            articleId: comment.articleId,
+            userId: comment.userId,
+            username: comment.user?.username,
+            userAvatar: comment.user?.avatar || undefined,
+            content: comment.content,
+            parentId: comment.parentId || undefined,
+            likes: comment.likes,
+            status: comment.status === 'APPROVED' ? 1 : comment.status === 'PENDING' ? 0 : 2,
+            createdAt: comment.createdAt.toISOString(),
+            updatedAt: comment.updatedAt.toISOString(),
+            replies: comment.replies?.map((r: any) => this.mapCommentRow(r))
+        }
+    },
+
+    async updateCommentStatus(
+        id: number,
+        status: 0 | 1 | 2
+    ): Promise<Comment | null> {
+        const st = status === 1 ? 'APPROVED' : status === 0 ? 'PENDING' : 'REJECTED'
+        try {
+            const comment = await prisma.comment.update({
+                where: { id },
+                data: { status: st },
+                include: {
+                    user: { select: { username: true, avatar: true } }
+                }
+            })
+            return this.mapCommentRow(comment)
+        } catch {
+            return null
+        }
+    },
+
+    async deleteComment(id: number): Promise<boolean> {
+        try {
+            await prisma.comment.delete({ where: { id } })
+            return true
+        } catch {
+            return false
         }
     }
 }

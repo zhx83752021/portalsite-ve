@@ -1,9 +1,12 @@
 <template>
   <div class="admin-login-page">
+    <div class="bg-decoration" aria-hidden="true"></div>
     <div class="login-container">
       <el-card class="login-card">
         <div class="login-title">
-          <h2>后台管理系统</h2>
+          <div class="seal-mark">新</div>
+          <h2>内容控制台</h2>
+          <p class="subtitle">CONTENT&nbsp;CONSOLE&nbsp;·&nbsp;管理员入口</p>
         </div>
         <el-form :model="loginForm" :rules="rules" ref="formRef" label-width="0">
           <el-form-item prop="username">
@@ -72,23 +75,7 @@ const handleLogin = async () => {
       // 跳转到后台管理首页
       router.push('/admin')
     } catch (error: any) {
-      // 模拟登录成功（开发环境）
-      if (error.message?.includes('Failed to fetch') || error.message?.includes('网络连接失败')) {
-        const mockAdmin = {
-          id: 1,
-          username: loginForm.username,
-          email: `${loginForm.username}@portal.com`,
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
-          role: 'admin',
-          createdAt: new Date().toISOString()
-        }
-        const mockToken = 'mock-admin-token-' + Date.now()
-        adminStore.login(mockAdmin, mockToken)
-        ElMessage.success('登录成功（模拟）')
-        router.push('/admin')
-      } else {
-        ElMessage.error(error.message || '登录失败')
-      }
+      ElMessage.error(error.message || '登录失败')
     } finally {
       loading.value = false
     }
@@ -101,33 +88,98 @@ const handleLogin = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  background: linear-gradient(135deg, var(--brand-navy-900) 0%, var(--brand-navy) 100%);
+  position: relative;
+  overflow: hidden;
 }
+
+.admin-login-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--brand-red);
+  z-index: 2;
+}
+
+.bg-decoration {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(212, 175, 55, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(197, 32, 44, 0.1) 0%, transparent 45%);
+  pointer-events: none;
+}
+
 .login-container {
   width: 100%;
-  max-width: 450px;
+  max-width: 440px;
   padding: 20px;
+  position: relative;
+  z-index: 1;
 }
+
 .login-card {
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-  border-radius: 12px;
-  padding: 20px;
+  box-shadow: 0 18px 60px rgba(6, 26, 51, 0.45);
+  border-radius: var(--radius-md);
+  padding: 24px 16px 16px;
+  border: none;
+  background: #fff;
 }
+
 .login-title {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 28px;
 }
+
+.login-title .seal-mark {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  background: var(--brand-red);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(197, 32, 44, 0.3);
+}
+
 .login-title h2 {
   margin: 0;
-  font-size: 28px;
-  font-weight: bold;
-  color: #303133;
+  font-size: 24px;
+  font-weight: var(--fw-bold);
+  color: var(--ink-900);
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
 }
+
+.login-title .subtitle {
+  margin: 6px 0 0;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.18em;
+  color: var(--ink-500);
+  font-family: var(--font-en);
+  text-transform: uppercase;
+}
+
 .login-tip {
   margin-top: 20px;
 }
+
+.login-tip :deep(.el-alert) {
+  background-color: var(--mist-50);
+  border: 1px solid var(--line-200);
+}
+
 .login-tip :deep(.el-alert__content) p {
   margin: 4px 0;
   font-size: 13px;
+  color: var(--ink-700);
 }
 </style>

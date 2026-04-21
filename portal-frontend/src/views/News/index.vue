@@ -1,475 +1,397 @@
 <template>
   <div class="news-page">
     <div class="container">
-      <el-row :gutter="20">
-        <!-- 左侧文章列表 -->
-        <el-col :xs="24" :sm="24" :md="18">
-          <!-- 分类导航 -->
-          <div class="category-nav">
-            <el-tag
-              v-for="cat in categories"
-              :key="cat.id"
-              :type="selectedCategory === cat.id ? 'primary' : 'info'"
-              effect="plain"
-              size="large"
-              @click="selectCategory(cat.id)"
-              style="cursor: pointer; margin-right: 10px; margin-bottom: 10px;"
-            >
-              {{ cat.name }}
-            </el-tag>
+
+      <!-- 页头 -->
+      <header class="page-head">
+        <div class="crumb">
+          <router-link to="/">首页</router-link>
+          <span class="sep">/</span>
+          <span>新闻中心</span>
+        </div>
+        <h1 class="page-headline">新闻中心</h1>
+        <p class="page-sub">聚合时政、社会、国际、军事等多领域权威资讯。</p>
+      </header>
+
+      <!-- 分类 Tab 条 -->
+      <div class="tabs-bar">
+        <UnderlineTabs v-model="activeCategory" :tabs="categoryTabs" />
+        <div class="search-inline">
+          <el-input v-model="searchKeyword" placeholder="搜索新闻……" :prefix-icon="Search" clearable
+            @keyup.enter="handleSearch" size="default" style="width: 260px" />
+        </div>
+      </div>
+
+      <!-- 主布局 -->
+      <div class="layout">
+        <!-- 左：文章列表 -->
+        <main class="col-main">
+          <el-empty v-if="!loading && !articles.length" description="暂无匹配的文章" />
+
+          <div v-else class="article-list">
+            <NewsListCard v-for="(a, i) in articles" :key="a.id" :article="a" variant="row" :top-rank="i + 1" />
           </div>
 
-          <!-- 文章列表 -->
-          <div class="article-list">
-            <el-card
-              v-for="article in articles"
-              :key="article.id"
-              class="article-card"
-              shadow="hover"
-              @click="goToDetail(article.id)"
-            >
-              <div class="article-item">
-                <div class="article-cover" v-if="article.cover">
-                  <img :src="article.cover" :alt="article.title" />
-                </div>
-                <div class="article-content">
-                  <h3>{{ article.title }}</h3>
-                  <p class="summary">{{ article.summary }}</p>
-                  <div class="article-meta">
-                    <span><el-icon><User /></el-icon> {{ article.authorName }}</span>
-                    <span><el-icon><Clock /></el-icon> {{ formatTime(article.createdAt) }}</span>
-                    <span><el-icon><View /></el-icon> {{ article.views }}</span>
-                    <el-tag size="small" v-if="article.categoryName">{{ article.categoryName }}</el-tag>
+          <div class="pagination" v-if="total > pageSize">
+            <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 40]"
+              :total="total" :pager-count="7" layout="prev, pager, next, sizes, jumper" @size-change="handleSizeChange"
+              @current-change="handlePageChange" />
+          </div>
+        </main>
+
+        <!-- 右：侧栏 -->
+        <aside class="col-side">
+          <div class="panel">
+            <SectionHeader title="热门文章" eyebrow="HOT" />
+            <ol class="rank-list">
+              <li v-for="(a, i) in hotArticles" :key="a.id" class="rank-item" @click="goToDetail(a.id)">
+                <span class="rn" :class="{ top: i < 3 }">{{ (i + 1).toString().padStart(2, '0') }}</span>
+                <div class="r-body">
+                  <div class="r-title">{{ a.title }}</div>
+                  <div class="r-meta">
+                    <span>{{ formatNum(a.views) }} 阅读</span>
                   </div>
                 </div>
-              </div>
-            </el-card>
+              </li>
+            </ol>
+          </div>
 
-            <!-- 空状态 -->
-            <el-empty v-if="articles.length === 0" description="暂无文章" />
-
-            <!-- 分页 -->
-            <div class="pagination">
-              <el-pagination
-                v-model:current-page="currentPage"
-                v-model:page-size="pageSize"
-                :page-sizes="[10, 20, 30, 50]"
-                :total="total"
-                layout="total, sizes, prev, pager, next, jumper"
-                @size-change="handleSizeChange"
-                @current-change="handleCurrentChange"
-              />
+          <div class="panel">
+            <SectionHeader title="标签" eyebrow="TAGS" />
+            <div class="tag-cloud">
+              <button v-for="t in tags" :key="t" type="button" class="tag" @click="searchByTag(t)">
+                # {{ t }}
+              </button>
             </div>
           </div>
-        </el-col>
-
-        <!-- 右侧边栏 -->
-        <el-col :xs="24" :sm="24" :md="6">
-          <!-- 搜索 -->
-          <el-card class="sidebar-card" shadow="hover">
-            <template #header>
-              <div class="card-header">
-                <span>搜索文章</span>
-              </div>
-            </template>
-            <el-input
-              v-model="searchKeyword"
-              placeholder="输入关键词搜索..."
-              :prefix-icon="Search"
-              @keyup.enter="handleSearch"
-            >
-              <template #append>
-                <el-button :icon="Search" @click="handleSearch" />
-              </template>
-            </el-input>
-          </el-card>
-
-          <!-- 热门文章 -->
-          <el-card class="sidebar-card" shadow="hover">
-            <template #header>
-              <div class="card-header">
-                <el-icon color="#f56c6c"><TrendCharts /></el-icon>
-                <span>热门文章</span>
-              </div>
-            </template>
-            <div class="hot-list">
-              <div
-                v-for="(article, index) in hotArticles"
-                :key="article.id"
-                class="hot-item"
-                @click="goToDetail(article.id)"
-              >
-                <span class="rank" :class="{ 'top': index < 3 }">{{ index + 1 }}</span>
-                <span class="title">{{ article.title }}</span>
-              </div>
-            </div>
-          </el-card>
-
-          <!-- 标签云 -->
-          <el-card class="sidebar-card" shadow="hover">
-            <template #header>
-              <div class="card-header">
-                <el-icon color="#409EFF"><Collection /></el-icon>
-                <span>热门标签</span>
-              </div>
-            </template>
-            <div class="tag-cloud">
-              <el-tag
-                v-for="tag in tags"
-                :key="tag"
-                size="small"
-                style="margin: 5px; cursor: pointer;"
-                @click="searchByTag(tag)"
-              >
-                {{ tag }}
-              </el-tag>
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
+        </aside>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getArticleList, getHotArticles } from '@/api/article'
 import { getCategoryList } from '@/api/category'
 import type { Article } from '@/api/article'
 import type { Category } from '@/api/category'
-import { Search, User, Clock, View, TrendCharts, Collection } from '@element-plus/icons-vue'
+import { Search } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { formatNum } from '@/utils/category'
+import NewsListCard from '@/components/ui/NewsListCard.vue'
+import SectionHeader from '@/components/ui/SectionHeader.vue'
+import UnderlineTabs from '@/components/ui/UnderlineTabs.vue'
+import type { TabItem } from '@/components/ui/UnderlineTabs.vue'
 
 const router = useRouter()
 const route = useRoute()
 
 const articles = ref<Article[]>([])
 const hotArticles = ref<Article[]>([])
-const categories = ref<Category[]>([{ id: 0, name: '全部', slug: 'all' }])
-const tags = ref<string[]>([])
+const categories = ref<Category[]>([])
+const tags = ref<string[]>(['两会', '央行政策', '新能源', 'AI', '奥运', '芯片', '地缘政治', '改革开放'])
 
-const selectedCategory = ref<number>(0)
-const searchKeyword = ref<string>('')
-const currentPage = ref<number>(1)
-const pageSize = ref<number>(20)
-const total = ref<number>(0)
+const activeCategory = ref<string | number>(0)
+const searchKeyword = ref('')
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const loading = ref(false)
+const NEWS_CENTER_SLUGS = new Set(['politics', 'society', 'international', 'military'])
+
+const categoryTabs = computed<TabItem[]>(() => [
+  { label: '全部', value: 0 },
+  ...categories.value
+    .filter(c => NEWS_CENTER_SLUGS.has(c.slug))
+    .map(c => ({ label: c.name, value: c.id })),
+])
+
+const selectedCategoryId = computed(() => {
+  const v = activeCategory.value
+  return typeof v === 'number' && v > 0 ? v : undefined
+})
 
 const fetchCategories = async () => {
   try {
-    const data = await getCategoryList()
-    categories.value = [{ id: 0, name: '全部', slug: 'all' }, ...data]
-  } catch (error) {
-    // 使用模拟数据
-    categories.value = [
-      { id: 0, name: '全部', slug: 'all' },
-      { id: 1, name: '时政', slug: 'politics' },
-      { id: 2, name: '社会', slug: 'society' },
-      { id: 3, name: '国际', slug: 'international' },
-      { id: 4, name: '军事', slug: 'military' }
-    ]
+    categories.value = await getCategoryList()
+  } catch {
+    categories.value = []
+    ElMessage.error('分类加载失败，请稍后重试')
   }
 }
 
 const fetchArticles = async () => {
+  loading.value = true
   try {
-    const params = {
+    const res = await getArticleList({
       page: currentPage.value,
       pageSize: pageSize.value,
-      categoryId: selectedCategory.value || undefined,
-      keyword: searchKeyword.value || undefined
-    }
-    const data = await getArticleList(params)
-    articles.value = data.list
-    total.value = data.total
-  } catch (error) {
-    // 使用模拟数据
-    useMockArticles()
+      categoryId: selectedCategoryId.value,
+      keyword: searchKeyword.value || undefined,
+    })
+    articles.value = res.list
+    total.value = res.total
+  } catch {
+    articles.value = []
+    total.value = 0
+  } finally {
+    loading.value = false
   }
 }
 
-const fetchHotArticles = async () => {
+const fetchHot = async () => {
   try {
-    const data = await getHotArticles(10)
-    hotArticles.value = data
-  } catch (error) {
-    // 使用模拟数据
-    hotArticles.value = Array.from({ length: 10 }, (_, i) => ({
-      id: i + 100,
-      title: `热门文章标题 ${i + 1}`,
-      content: '',
-      summary: '',
-      categoryId: 1,
-      authorId: 1,
-      views: 10000 - i * 500,
-      status: 1,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }))
+    hotArticles.value = await getHotArticles(10)
+  } catch {
+    hotArticles.value = []
   }
 }
 
-const useMockArticles = () => {
-  const mockList = Array.from({ length: pageSize.value }, (_, i) => ({
-    id: i + 1,
-    title: `新闻标题 ${i + 1} - 这是一个很长的标题用于展示效果`,
-    content: '新闻正文内容...',
-    summary: '这是新闻摘要，简要介绍新闻的主要内容和核心观点，吸引读者点击阅读全文。',
-    cover: i % 3 === 0 ? `https://picsum.photos/400/250?random=${i}` : undefined,
-    categoryId: (i % 4) + 1,
-    categoryName: ['时政', '社会', '国际', '军事'][i % 4],
-    authorId: 1,
-    authorName: '编辑' + (i % 5 + 1),
-    views: Math.floor(Math.random() * 10000),
-    status: 1,
-    createdAt: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
-    updatedAt: new Date().toISOString(),
-    tags: ['标签1', '标签2', '标签3'].slice(0, Math.floor(Math.random() * 3) + 1)
-  }))
-  articles.value = mockList
-  total.value = 100
-
-  // 收集所有标签
-  const allTags = new Set<string>()
-  mockList.forEach(article => {
-    article.tags?.forEach(tag => allTags.add(tag))
-  })
-  tags.value = Array.from(allTags)
-}
-
-const formatTime = (time: string) => {
-  const date = new Date(time)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-
-  if (diff < 3600000) {
-    return Math.floor(diff / 60000) + '分钟前'
-  } else if (diff < 86400000) {
-    return Math.floor(diff / 3600000) + '小时前'
-  } else if (diff < 604800000) {
-    return Math.floor(diff / 86400000) + '天前'
-  } else {
-    return date.toLocaleDateString()
-  }
-}
-
-const selectCategory = (categoryId: number) => {
-  selectedCategory.value = categoryId
+watch([activeCategory, searchKeyword], () => {
   currentPage.value = 1
-  fetchArticles()
-}
+})
+
+watch(activeCategory, () => fetchArticles())
 
 const handleSearch = () => {
   currentPage.value = 1
   fetchArticles()
 }
 
-const searchByTag = (tag: string) => {
-  searchKeyword.value = tag
+const searchByTag = (t: string) => {
+  searchKeyword.value = t
   handleSearch()
 }
 
-const goToDetail = (id: number) => {
-  router.push(`/news/${id}`)
-}
+const goToDetail = (id: number) => router.push(`/news/${id}`)
 
-const handleSizeChange = (val: number) => {
-  pageSize.value = val
+const handleSizeChange = (v: number) => {
+  pageSize.value = v
   fetchArticles()
 }
 
-const handleCurrentChange = (val: number) => {
-  currentPage.value = val
+const handlePageChange = (v: number) => {
+  currentPage.value = v
   fetchArticles()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-onMounted(() => {
-  // 从路由查询参数获取关键词
-  if (route.query.keyword) {
-    searchKeyword.value = route.query.keyword as string
+onMounted(async () => {
+  if (route.query.keyword) searchKeyword.value = String(route.query.keyword)
+  await fetchCategories()
+  if (route.query.cat) {
+    const slug = String(route.query.cat)
+    const c = categories.value.find(c => c.slug === slug && NEWS_CENTER_SLUGS.has(c.slug))
+    if (c) activeCategory.value = c.id
   }
-
-  fetchCategories()
   fetchArticles()
-  fetchHotArticles()
+  fetchHot()
 })
 
-watch(() => route.query, () => {
-  if (route.query.keyword) {
-    searchKeyword.value = route.query.keyword as string
-    handleSearch()
-  }
-})
+watch(
+  () => route.query,
+  q => {
+    if (q.keyword !== undefined) {
+      searchKeyword.value = String(q.keyword || '')
+      handleSearch()
+    }
+  },
+)
 </script>
 
-<style scoped lang="css">
+<style scoped>
 .news-page {
   min-height: 60vh;
+  padding-bottom: 64px;
 }
 
-.category-nav {
-  background: #fff;
-  padding: 20px;
-  margin-bottom: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* ============ page head ============ */
+.page-head {
+  padding: 32px 0 24px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 28px;
 }
 
-.article-list {
-  min-height: 500px;
-}
-
-.article-card {
-  margin-bottom: 20px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.article-card:hover {
-  transform: translateY(-2px);
-}
-
-.article-item {
+.crumb {
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  color: var(--ink-400);
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
   display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.crumb a {
+  color: var(--ink-600);
+  text-decoration: none;
+}
+
+.crumb a:hover {
+  color: var(--brand-red);
+}
+
+.crumb .sep {
+  color: var(--ink-300);
+}
+
+.page-headline {
+  font-family: var(--font-display);
+  font-size: var(--fs-display-2);
+  font-weight: var(--fw-bold);
+  color: var(--ink-900);
+  margin: 0 0 10px;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+
+.page-sub {
+  font-size: 15px;
+  color: var(--ink-600);
+  margin: 0;
+  line-height: 1.7;
+}
+
+/* ============ tabs bar ============ */
+.tabs-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 20px;
+  margin-bottom: 28px;
 }
 
-.article-cover {
+.search-inline {
   flex-shrink: 0;
-  width: 200px;
-  height: 140px;
-  border-radius: 4px;
-  overflow: hidden;
 }
 
-.article-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+@media (max-width: 960px) {
+  .tabs-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .search-inline {
+    width: 100%;
+  }
+  .search-inline .el-input {
+    width: 100% !important;
+  }
 }
 
-.article-content {
-  flex: 1;
+/* ============ layout ============ */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 48px;
+}
+
+@media (max-width: 960px) {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+.col-side {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 32px;
 }
 
-.article-content h3 {
+/* ============ pagination ============ */
+.pagination {
+  margin-top: 32px;
+  display: flex;
+  justify-content: center;
+}
+
+/* ============ rank list ============ */
+.rank-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rank-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  align-items: flex-start;
+}
+
+.rank-item:last-child {
+  border-bottom: none;
+}
+
+.rank-item:hover .r-title {
+  color: var(--brand-red);
+}
+
+.rn {
+  font-family: var(--font-mono);
   font-size: 18px;
-  color: #303133;
-  margin: 0 0 10px;
-  line-height: 1.4;
+  font-weight: var(--fw-bold);
+  color: var(--ink-300);
+  line-height: 1;
+  width: 28px;
 }
 
-.summary {
+.rn.top {
+  color: var(--brand-red);
+}
+
+.r-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.r-title {
   font-size: 14px;
-  color: #606266;
-  margin: 0 0 auto;
-  line-height: 1.6;
+  color: var(--ink-900);
+  line-height: 1.5;
+  margin-bottom: 4px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.article-meta {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-  font-size: 13px;
-  color: #909399;
-  margin-top: 10px;
+.r-meta {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ink-400);
 }
 
-.article-meta span {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  margin-top: 30px;
-  padding: 20px 0;
-}
-
-.sidebar-card {
-  margin-bottom: 20px;
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: bold;
-}
-
-.hot-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.hot-item {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 4px;
-  transition: background 0.3s;
-}
-
-.hot-item:hover {
-  background: #f5f7fa;
-}
-
-.rank {
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  line-height: 24px;
-  text-align: center;
-  background: #e4e7ed;
-  color: #606266;
-  border-radius: 4px;
-  font-weight: bold;
-  font-size: 14px;
-}
-
-.rank.top {
-  background: linear-gradient(135deg, #f56c6c, #e6a23c);
-  color: #fff;
-}
-
-.hot-item .title {
-  flex: 1;
-  font-size: 14px;
-  color: #303133;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
+/* ============ tags ============ */
 .tag-cloud {
   display: flex;
   flex-wrap: wrap;
+  gap: 8px;
 }
 
-@media (max-width: 768px) {
-  .article-item {
-    flex-direction: column;
-  }
+.tag {
+  appearance: none;
+  background: var(--mist-100);
+  border: 1px solid transparent;
+  color: var(--ink-600);
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
 
-  .article-cover {
-    width: 100%;
-    height: 200px;
-  }
-
-  .pagination :deep(.el-pagination) {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
+.tag:hover {
+  background: #fff;
+  color: var(--brand-red);
+  border-color: var(--brand-red);
 }
 </style>

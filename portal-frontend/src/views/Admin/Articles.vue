@@ -15,16 +15,16 @@
         </div>
       </template>
 
-      <!-- 搜索栏 -->
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="标题">
           <el-input v-model="searchForm.title" placeholder="请输入文章标题" clearable />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
+          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable style="width: 140px">
             <el-option label="全部" value="" />
             <el-option label="已发布" value="published" />
             <el-option label="草稿" value="draft" />
+            <el-option label="已下架" value="archived" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -38,21 +38,32 @@
         </el-form-item>
       </el-form>
 
-      <!-- 文章列表 -->
       <el-table :data="articleList" v-loading="loading" stripe style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="title" label="标题" min-width="200" />
-        <el-table-column prop="category" label="分类" width="120" />
-        <el-table-column prop="author" label="作者" width="120" />
-        <el-table-column prop="views" label="浏览量" width="100" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column label="分类" width="120">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'published' ? 'success' : 'info'">
-              {{ row.status === 'published' ? '已发布' : '草稿' }}
+            {{ row.categoryName || '—' }}
+          </template>
+        </el-table-column>
+        <el-table-column label="作者" width="120">
+          <template #default="{ row }">
+            {{ row.authorName || '—' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="views" label="浏览量" width="100" />
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 1 ? 'success' : row.status === 0 ? 'info' : 'warning'">
+              {{ statusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180" />
+        <el-table-column label="创建时间" width="180">
+          <template #default="{ row }">
+            {{ formatTime(row.createdAt) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="handleEdit(row)">
@@ -71,32 +82,33 @@
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
-      <el-pagination v-model:current-page="pagination.page" v-model:page-size="pagination.pageSize"
-        :page-sizes="[10, 20, 50, 100]" :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange" @current-change="handlePageChange" class="pagination" />
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="pagination.total"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+        class="pagination"
+      />
     </el-card>
 
-    <!-- 编辑对话框 -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="800px" :close-on-click-modal="false">
       <el-form :model="articleForm" :rules="rules" ref="formRef" label-width="80px">
         <el-form-item label="标题" prop="title">
           <el-input v-model="articleForm.title" placeholder="请输入文章标题" />
         </el-form-item>
-        <el-form-item label="分类" prop="category">
-          <el-select v-model="articleForm.category" placeholder="请选择分类">
-            <el-option label="新闻" value="新闻" />
-            <el-option label="财经" value="财经" />
-            <el-option label="体育" value="体育" />
-            <el-option label="娱乐" value="娱乐" />
-            <el-option label="科技" value="科技" />
+        <el-form-item label="分类" prop="categoryId">
+          <el-select v-model="articleForm.categoryId" placeholder="请选择分类" style="width: 100%">
+            <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="摘要" prop="summary">
           <el-input v-model="articleForm.summary" type="textarea" :rows="3" placeholder="请输入文章摘要" />
         </el-form-item>
         <el-form-item label="内容" prop="content">
-          <el-input v-model="articleForm.content" type="textarea" :rows="8" placeholder="请输入文章内容" />
+          <el-input v-model="articleForm.content" type="textarea" :rows="10" placeholder="请输入文章内容" />
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="articleForm.status">
@@ -107,9 +119,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSave" :loading="saveLoading">
-          保存
-        </el-button>
+        <el-button type="primary" @click="handleSave" :loading="saveLoading">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -119,6 +129,16 @@
 import { ref, reactive, onMounted } from 'vue'
 import { Plus, Search, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
+import type { Article } from '@/api/article'
+import {
+  getAdminArticles,
+  getAdminArticle,
+  createAdminArticle,
+  updateAdminArticle,
+  deleteAdminArticle,
+  getAdminCategories,
+  type AdminCategory,
+} from '@/api/admin'
 
 const loading = ref(false)
 const saveLoading = ref(false)
@@ -126,99 +146,82 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('新建文章')
 const formRef = ref<FormInstance>()
 
-// 搜索表单
+const categories = ref<AdminCategory[]>([])
+
 const searchForm = reactive({
   title: '',
-  status: ''
+  status: '' as '' | 'published' | 'draft' | 'archived',
 })
 
-// 文章列表
-const articleList = ref([
-  {
-    id: 1,
-    title: '门户网站产品需求文档发布',
-    category: '新闻',
-    author: 'admin',
-    views: 1280,
-    status: 'published',
-    createdAt: '2024-11-24 10:30'
-  },
-  {
-    id: 2,
-    title: 'Vue 3 最佳实践指南',
-    category: '科技',
-    author: 'admin',
-    views: 856,
-    status: 'published',
-    createdAt: '2024-11-23 15:20'
-  },
-  {
-    id: 3,
-    title: 'TypeScript 开发技巧总结',
-    category: '科技',
-    author: 'admin',
-    views: 645,
-    status: 'draft',
-    createdAt: '2024-11-22 09:15'
-  }
-])
+const articleList = ref<Article[]>([])
 
-// 分页
 const pagination = reactive({
   page: 1,
   pageSize: 10,
-  total: 3
+  total: 0,
 })
 
-// 文章表单
 const articleForm = reactive({
   id: 0,
   title: '',
-  category: '',
+  categoryId: undefined as number | undefined,
   summary: '',
   content: '',
-  status: 'draft'
+  status: 'draft' as 'published' | 'draft',
 })
 
-// 表单验证规则
 const rules = {
-  title: [
-    { required: true, message: '请输入文章标题', trigger: 'blur' }
-  ],
-  category: [
-    { required: true, message: '请选择文章分类', trigger: 'change' }
-  ],
-  content: [
-    { required: true, message: '请输入文章内容', trigger: 'blur' }
-  ]
+  title: [{ required: true, message: '请输入文章标题', trigger: 'blur' }],
+  categoryId: [{ required: true, message: '请选择分类', trigger: 'change' }],
+  content: [{ required: true, message: '请输入文章内容', trigger: 'blur' }],
 }
 
-// 加载文章列表
+const statusLabel = (s: number) => {
+  if (s === 1) return '已发布'
+  if (s === 0) return '草稿'
+  return '已下架'
+}
+
+const formatTime = (t: string) => {
+  const d = new Date(t)
+  if (Number.isNaN(d.getTime())) return t
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+const loadCategories = async () => {
+  try {
+    categories.value = await getAdminCategories()
+  } catch {
+    categories.value = []
+  }
+}
+
 const loadArticles = async () => {
   loading.value = true
   try {
-    // TODO: 调用API获取文章列表
-    // const data = await getArticles({ ...searchForm, ...pagination })
-    // articleList.value = data.list
-    // pagination.total = data.total
-
-    // 模拟加载
-    setTimeout(() => {
-      loading.value = false
-    }, 500)
-  } catch (error: any) {
-    ElMessage.error(error.message || '加载失败')
+    const data = await getAdminArticles({
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      title: searchForm.title || undefined,
+      keyword: searchForm.title || undefined,
+      status: searchForm.status || undefined,
+    })
+    articleList.value = data.list || []
+    pagination.total = data.total
+  } catch (e: any) {
+    ElMessage.error(e?.message || '加载失败')
+    articleList.value = []
+    pagination.total = 0
+  } finally {
     loading.value = false
   }
 }
 
-// 搜索
 const handleSearch = () => {
   pagination.page = 1
   loadArticles()
 }
 
-// 重置
 const handleReset = () => {
   searchForm.title = ''
   searchForm.status = ''
@@ -226,87 +229,85 @@ const handleReset = () => {
   loadArticles()
 }
 
-// 新建文章
 const handleCreate = () => {
   dialogTitle.value = '新建文章'
   articleForm.id = 0
   articleForm.title = ''
-  articleForm.category = ''
+  articleForm.categoryId = categories.value[0]?.id
   articleForm.summary = ''
   articleForm.content = ''
   articleForm.status = 'draft'
   dialogVisible.value = true
 }
 
-// 编辑文章
-const handleEdit = (row: any) => {
+const handleEdit = async (row: Article) => {
   dialogTitle.value = '编辑文章'
-  articleForm.id = row.id
-  articleForm.title = row.title
-  articleForm.category = row.category
-  articleForm.summary = row.summary || ''
-  articleForm.content = row.content || '这是文章内容...'
-  articleForm.status = row.status
-  dialogVisible.value = true
+  saveLoading.value = true
+  try {
+    const full = await getAdminArticle(row.id)
+    articleForm.id = full.id
+    articleForm.title = full.title
+    articleForm.categoryId = full.categoryId
+    articleForm.summary = full.summary || ''
+    articleForm.content = full.content || ''
+    articleForm.status = full.status === 1 ? 'published' : 'draft'
+    dialogVisible.value = true
+  } catch (e: any) {
+    ElMessage.error(e?.message || '加载文章失败')
+  } finally {
+    saveLoading.value = false
+  }
 }
 
-// 保存文章
 const handleSave = async () => {
   if (!formRef.value) return
-
-  await formRef.value.validate(async (valid) => {
+  await formRef.value.validate(async valid => {
     if (!valid) return
+    if (articleForm.categoryId == null) {
+      ElMessage.warning('请选择分类')
+      return
+    }
 
     saveLoading.value = true
     try {
-      // TODO: 调用API保存文章
-      // if (articleForm.id) {
-      //   await updateArticle(articleForm.id, articleForm)
-      // } else {
-      //   await createArticle(articleForm)
-      // }
-
-      // 模拟保存
-      setTimeout(() => {
-        ElMessage.success('保存成功')
-        dialogVisible.value = false
-        saveLoading.value = false
-        loadArticles()
-      }, 500)
-    } catch (error: any) {
-      ElMessage.error(error.message || '保存失败')
+      const payload = {
+        title: articleForm.title,
+        content: articleForm.content,
+        summary: articleForm.summary,
+        categoryId: articleForm.categoryId,
+        status: articleForm.status,
+      }
+      if (articleForm.id) {
+        await updateAdminArticle(articleForm.id, payload)
+        ElMessage.success('更新成功')
+      } else {
+        await createAdminArticle(payload)
+        ElMessage.success('创建成功')
+      }
+      dialogVisible.value = false
+      await loadArticles()
+    } catch (e: any) {
+      ElMessage.error(e?.message || '保存失败')
+    } finally {
       saveLoading.value = false
     }
   })
 }
 
-// 删除文章
-const handleDelete = (row: any) => {
+const handleDelete = (row: Article) => {
   ElMessageBox.confirm(`确定要删除文章「${row.title}」吗？`, '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    try {
-      // TODO: 调用API删除文章
-      // await deleteArticle(row.id)
-
-      // 模拟删除
-      const index = articleList.value.findIndex(item => item.id === row.id)
-      if (index > -1) {
-        articleList.value.splice(index, 1)
-        pagination.total--
-      }
-      ElMessage.success('删除成功')
-    } catch (error: any) {
-      ElMessage.error(error.message || '删除失败')
-    }
-  }).catch(() => {
-    // 取消删除
+    type: 'warning',
   })
+    .then(async () => {
+      await deleteAdminArticle(row.id)
+      ElMessage.success('删除成功')
+      await loadArticles()
+    })
+    .catch(() => {})
 }
 
-// 分页相关
 const handleSizeChange = (size: number) => {
   pagination.pageSize = size
   loadArticles()
@@ -317,8 +318,9 @@ const handlePageChange = (page: number) => {
   loadArticles()
 }
 
-onMounted(() => {
-  loadArticles()
+onMounted(async () => {
+  await loadCategories()
+  await loadArticles()
 })
 </script>
 

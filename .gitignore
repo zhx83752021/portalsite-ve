@@ -37,3 +37,9 @@ yarn-error.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Cursor / workspace-only artifacts
+.cursor/
+.playwright-mcp/
+uploads/
+terminals/

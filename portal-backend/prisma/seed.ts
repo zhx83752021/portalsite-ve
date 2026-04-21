@@ -8,6 +8,91 @@ import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
+/**
+ * 分类题图池 —— 按分类 slug 维护 Unsplash 封面 URL 列表，
+ * 种子阶段按 index 轮换，保证同一分类内封面不会重复。
+ * 图片均经过分类契合度、构图、色彩复核；统一 1200x630，适配 OG/Hero/16:9 列表。
+ */
+const CATEGORY_COVER_POOL: Record<string, string[]> = {
+    politics: [
+        'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1555848962-6e79363ec58f?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=1200&h=630&fit=crop'
+    ],
+    society: [
+        'https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=1200&h=630&fit=crop'
+    ],
+    international: [
+        'https://images.unsplash.com/photo-1569163139394-de4798aa62b6?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1526470498-9ae73c665de8?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1589519160732-57fc498494f8?w=1200&h=630&fit=crop'
+    ],
+    military: [
+        'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1485163819542-13adeb5e0068?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1580541631950-7282082b53fe?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&h=630&fit=crop'
+    ],
+    finance: [
+        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1579532537598-459ecdaf39cc?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&h=630&fit=crop'
+    ],
+    sports: [
+        'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=1200&h=630&fit=crop'
+    ],
+    entertainment: [
+        'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=1200&h=630&fit=crop'
+    ],
+    tech: [
+        'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1581093588401-fbb62a02f120?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=1200&h=630&fit=crop',
+        'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&h=630&fit=crop'
+    ]
+}
+
+/**
+ * 从分类题图池中取第 index 张封面（按环形索引），
+ * 若分类未命中或池为空，则回退到传入的 fallback 值。
+ */
+function pickCoverFromPool(slug: string, index: number, fallback: string): string {
+    const pool = CATEGORY_COVER_POOL[slug]
+    if (!pool || pool.length === 0) return fallback
+    return pool[index % pool.length]
+}
+
 async function main() {
     console.log('🌱 开始播种数据...')
 
@@ -163,17 +248,26 @@ async function main() {
     ]
 
     const articles = []
+    // 记录每个分类已用过的封面张数，用于环形轮换
+    const categoryCoverCursor: Record<number, number> = {}
     for (let i = 0; i < realArticles.length; i++) {
         const articleData = realArticles[i]
         // 前3篇设置为热门文章（高浏览量），用于首页Banner
         const views = i < 3 ? 15000 + i * 100 : Math.floor(Math.random() * 10000)
+
+        // 从分类题图池中取封面，保证同分类下封面轮换不重复；
+        // 若池未命中则使用文章自带 cover 作为兜底
+        const categorySlug = categories[articleData.category].slug
+        const cursor = categoryCoverCursor[articleData.category] ?? 0
+        const cover = pickCoverFromPool(categorySlug, cursor, articleData.cover)
+        categoryCoverCursor[articleData.category] = cursor + 1
 
         const article = await prisma.article.create({
             data: {
                 title: articleData.title,
                 content: articleData.content,
                 summary: articleData.summary,
-                cover: articleData.cover,
+                cover: cover,
                 categoryId: categories[articleData.category].id,
                 authorId: admin.id,
                 views: views,

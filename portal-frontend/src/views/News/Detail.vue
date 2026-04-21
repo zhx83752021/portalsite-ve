@@ -1,241 +1,235 @@
 <template>
-  <div class="article-detail">
+  <div class="detail-page" v-loading="loading">
     <div class="container">
-      <el-row :gutter="20">
-        <el-col :xs="24" :sm="24" :md="18">
-          <el-card v-loading="loading">
-            <article class="article-content">
-              <!-- 文章头部 -->
-              <header class="article-header">
-                <h1>{{ article.title }}</h1>
-                <div class="article-meta">
-                  <span><el-icon><User /></el-icon> {{ article.authorName }}</span>
-                  <span><el-icon><Clock /></el-icon> {{ formatTime(article.createdAt || '') }}</span>
-                  <span><el-icon><View /></el-icon> {{ article.views }} 阅读</span>
-                  <el-tag v-if="article.categoryName">{{ article.categoryName }}</el-tag>
+
+      <div class="layout">
+        <!-- ============ 左：正文 ============ -->
+        <article class="col-main">
+
+          <!-- 面包屑 -->
+          <nav class="crumb">
+            <router-link to="/">首页</router-link>
+            <span class="sep">/</span>
+            <router-link to="/news">新闻中心</router-link>
+            <span v-if="article.categoryName" class="sep">/</span>
+            <span v-if="article.categoryName" class="cur">{{ article.categoryName }}</span>
+          </nav>
+
+          <!-- 文章头 -->
+          <header class="art-head">
+            <div class="eyebrow">
+              <MetaChip v-if="article.categoryName" :label="article.categoryName" variant="solid" tone="red" />
+              <span class="time-line">
+                <time>{{ fullTime(article.createdAt) }}</time>
+                <span class="sep">·</span>
+                <span>{{ formatNum(article.views) }} 阅读</span>
+                <span class="sep">·</span>
+                <span class="read-time">预计阅读 {{ readMinutes }} 分钟</span>
+              </span>
+            </div>
+            <h1 class="title">{{ article.title }}</h1>
+            <p class="lead" v-if="article.summary">{{ article.summary }}</p>
+            <div class="byline">
+              <div class="author">
+                <div class="avatar">{{ (article.authorName || '编').charAt(0) }}</div>
+                <div class="a-info">
+                  <div class="a-name">{{ article.authorName || '编辑部' }}</div>
+                  <div class="a-role">记者 · 综合报道</div>
                 </div>
-              </header>
-
-              <!-- 文章封面 -->
-              <div class="article-cover" v-if="article.cover">
-                <img :src="article.cover" :alt="article.title" />
               </div>
-
-              <!-- 文章摘要 -->
-              <div class="article-summary" v-if="article.summary">
-                <p>{{ article.summary }}</p>
-              </div>
-
-              <!-- 文章正文 -->
-              <div class="article-body" v-html="article.content"></div>
-
-              <!-- 文章标签 -->
-              <div class="article-tags" v-if="article.tags && article.tags.length">
-                <el-tag
-                  v-for="tag in article.tags"
-                  :key="tag"
-                  size="small"
-                  style="margin-right: 8px;"
-                >
-                  {{ tag }}
-                </el-tag>
-              </div>
-
-              <!-- 文章操作 -->
-              <div class="article-actions">
-                <el-button :icon="Star" @click="handleFavorite">
+              <div class="actions">
+                <button class="act-btn" type="button" @click="handleFavorite">
+                  <el-icon>
+                    <Star />
+                  </el-icon>
                   {{ isFavorited ? '已收藏' : '收藏' }}
-                </el-button>
-                <el-button :icon="Share" @click="handleShare">分享</el-button>
+                </button>
+                <button class="act-btn" type="button" @click="handleShare">
+                  <el-icon>
+                    <Share />
+                  </el-icon>
+                  分享
+                </button>
               </div>
-            </article>
+            </div>
+          </header>
 
-            <!-- 评论区 -->
-            <div class="comment-section">
-              <h3>评论 ({{ comments.length }})</h3>
+          <!-- 封面 -->
+          <figure class="art-cover" v-if="article.cover">
+            <img :src="article.cover" :alt="article.title" loading="eager" decoding="async" fetchpriority="high" />
+            <figcaption v-if="article.summary" class="caption">{{ article.summary }}</figcaption>
+          </figure>
+          <figure class="art-cover" v-else-if="article.id">
+            <CategoryCover :slug="slug" :title="article.title" :width="1120" :height="630" :show-ruler="true" />
+          </figure>
 
-              <!-- 发表评论 -->
-              <div class="comment-form" v-if="isLoggedIn">
-                <el-input
-                  v-model="commentContent"
-                  type="textarea"
-                  :rows="4"
-                  placeholder="发表你的看法..."
-                  maxlength="500"
-                  show-word-limit
-                />
-                <el-button type="primary" @click="submitComment" :loading="submitting">
-                  发表评论
-                </el-button>
+          <!-- 正文 -->
+          <div class="art-body" ref="bodyRef" v-html="article.content"></div>
+
+          <!-- 标签 -->
+          <div class="art-tags" v-if="article.tags && article.tags.length">
+            <span class="t-label">相关标签</span>
+            <button v-for="t in article.tags" :key="t" type="button" class="tag">
+              # {{ t }}
+            </button>
+          </div>
+
+          <!-- 转载声明 -->
+          <aside class="disclaimer">
+            本文内容来自综合门户编辑部整理，转载请注明出处。
+          </aside>
+
+          <CommentBox v-if="article.id" :article-id="article.id" />
+        </article>
+
+        <!-- ============ 右：目录 + 相关 ============ -->
+        <aside class="col-side">
+          <div class="sticky">
+            <div class="panel" v-if="toc.length">
+              <div class="panel-head">
+                <span class="eyebrow-chip">目录</span>
+                <span class="num">{{ toc.length }}</span>
               </div>
-              <div class="comment-login-tip" v-else>
-                <el-alert type="info" :closable="false">
-                  请先 <router-link to="/login">登录</router-link> 后发表评论
-                </el-alert>
-              </div>
+              <ol class="toc">
+                <li v-for="h in toc" :key="h.id" :class="['toc-li', `lv-${h.level}`, { active: activeHeading === h.id }]"
+                  @click="scrollTo(h.id)">
+                  <span class="toc-bar" aria-hidden="true"></span>
+                  <span class="toc-text">{{ h.text }}</span>
+                </li>
+              </ol>
+            </div>
 
-              <!-- 评论列表 -->
-              <div class="comment-list">
-                <div v-for="comment in comments" :key="comment.id" class="comment-item">
-                  <el-avatar :src="comment.userAvatar">{{ comment.username?.charAt(0) }}</el-avatar>
-                  <div class="comment-content">
-                    <div class="comment-user">{{ comment.username }}</div>
-                    <div class="comment-text">{{ comment.content }}</div>
-                    <div class="comment-meta">
-                      <span>{{ formatTime(comment.createdAt) }}</span>
-                      <el-button text size="small" :icon="ChatLineRound">回复</el-button>
-                      <el-button text size="small" :icon="CaretTop">{{ comment.likes || 0 }}</el-button>
-                    </div>
+            <div class="panel">
+              <SectionHeader title="相关文章" eyebrow="RELATED" />
+              <ol class="related">
+                <li v-for="r in relatedArticles" :key="r.id" class="r-item" @click="goToDetail(r.id)">
+                  <span class="r-num">{{ r.id }}</span>
+                  <div class="r-main">
+                    <div class="r-title">{{ r.title }}</div>
+                    <div class="r-meta">{{ relativeTime(r.createdAt) }}</div>
                   </div>
-                </div>
-                <el-empty v-if="comments.length === 0" description="暂无评论" />
-              </div>
+                </li>
+              </ol>
             </div>
-          </el-card>
-        </el-col>
-
-        <!-- 右侧边栏 -->
-        <el-col :xs="24" :sm="24" :md="6">
-          <!-- 相关文章 -->
-          <el-card class="sidebar-card" shadow="hover">
-            <template #header>
-              <div class="card-header">
-                <el-icon><Reading /></el-icon>
-                <span>相关文章</span>
-              </div>
-            </template>
-            <div class="related-list">
-              <div
-                v-for="item in relatedArticles"
-                :key="item.id"
-                class="related-item"
-                @click="goToDetail(item.id)"
-              >
-                <h4>{{ item.title }}</h4>
-                <p>{{ formatTime(item.createdAt) }}</p>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
+          </div>
+        </aside>
+      </div>
     </div>
+
+    <!-- 阅读进度条 -->
+    <div class="read-progress" :style="{ width: readProgress + '%' }" aria-hidden="true"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getArticleDetail, getRelatedArticles } from '@/api/article'
 import type { Article } from '@/api/article'
-import { User, Clock, View, Star, Share, ChatLineRound, CaretTop, Reading } from '@element-plus/icons-vue'
+import { Star, Share } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { relativeTime, formatNum, resolveSlug } from '@/utils/category'
+import MetaChip from '@/components/ui/MetaChip.vue'
+import SectionHeader from '@/components/ui/SectionHeader.vue'
+import CategoryCover from '@/components/ui/CategoryCover.vue'
+import CommentBox from '@/components/business/CommentBox.vue'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
 const loading = ref(false)
-const submitting = ref(false)
-const article = ref<Partial<Article>>({})
+const article = ref<Partial<Article & { categorySlug?: string }>>({})
 const relatedArticles = ref<Article[]>([])
-const comments = ref<any[]>([])
-const commentContent = ref('')
 const isFavorited = ref(false)
 
+const bodyRef = ref<HTMLElement | null>(null)
+const toc = ref<{ id: string; text: string; level: number }[]>([])
+const activeHeading = ref<string>('')
+const readProgress = ref(0)
+
 const isLoggedIn = computed(() => userStore.isLoggedIn)
+const slug = computed(() => resolveSlug(article.value))
+
+const readMinutes = computed(() => {
+  const text = (article.value.content || '').replace(/<[^>]*>/g, '')
+  return Math.max(1, Math.round(text.length / 500))
+})
+
+const fullTime = (t?: string) => {
+  if (!t) return ''
+  const d = new Date(t)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const week = ['日', '一', '二', '三', '四', '五', '六']
+  return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())} · 周${week[d.getDay()]}`
+}
 
 const fetchArticle = async () => {
   const id = Number(route.params.id)
   if (!id) {
-    ElMessage.error('文章ID无效')
+    ElMessage.error('文章 ID 无效')
     router.push('/news')
     return
   }
-
   loading.value = true
   try {
-    const data = await getArticleDetail(id)
-    article.value = data
-  } catch (error) {
-    // 使用模拟数据
-    article.value = {
-      id,
-      title: '这是文章详情页标题 - 展示完整的新闻内容',
-      content: `
-        <h2>文章导语</h2>
-        <p>这是文章的导语部分，简要介绍文章的主要内容和背景信息。</p>
-
-        <h2>第一部分：背景介绍</h2>
-        <p>这里是文章的第一部分内容，详细介绍事件的背景和相关信息。文章内容应该条理清晰，层次分明，便于读者理解。</p>
-        <p>每个段落都应该围绕一个中心思想展开，段落之间要有逻辑连接，保证文章的连贯性和可读性。</p>
-
-        <h2>第二部分：详细分析</h2>
-        <p>在这一部分，我们将深入分析事件的各个方面，包括原因、影响、趋势等。</p>
-        <ul>
-          <li>要点一：详细说明第一个要点</li>
-          <li>要点二：详细说明第二个要点</li>
-          <li>要点三：详细说明第三个要点</li>
-        </ul>
-
-        <h2>第三部分：总结展望</h2>
-        <p>最后，我们对整个事件进行总结，并展望未来的发展趋势。</p>
-        <p>通过以上分析，我们可以得出以下结论...</p>
-      `,
-      summary: '这是文章摘要，简要介绍文章的主要内容',
-      cover: 'https://picsum.photos/800/400?random=' + id,
-      categoryId: 1,
-      categoryName: '新闻',
-      authorId: 1,
-      authorName: '编辑部',
-      views: Math.floor(Math.random() * 10000),
-      status: 1,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      tags: ['热点', '重要', '推荐']
-    }
+    article.value = await getArticleDetail(id)
+  } catch {
+    ElMessage.error('文章不存在或加载失败')
+    article.value = {}
+    router.push('/news')
   } finally {
     loading.value = false
+    nextTick(() => {
+      if (article.value?.content) buildToc()
+    })
   }
 }
 
-const fetchRelatedArticles = async () => {
+const fetchRelated = async () => {
   const id = Number(route.params.id)
   try {
-    const data = await getRelatedArticles(id, 5)
-    relatedArticles.value = data
-  } catch (error) {
-    // 模拟数据
-    relatedArticles.value = Array.from({ length: 5 }, (_, i) => ({
-      id: id + i + 1,
-      title: `相关文章标题 ${i + 1}`,
-      content: '',
-      summary: '',
-      categoryId: 1,
-      authorId: 1,
-      views: 1000,
-      status: 1,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }))
+    relatedArticles.value = await getRelatedArticles(id, 6)
+  } catch {
+    relatedArticles.value = []
   }
 }
 
-const fetchComments = () => {
-  // 模拟评论数据
-  comments.value = Array.from({ length: 5 }, (_, i) => ({
-    id: i + 1,
-    username: '用户' + (i + 1),
-    userAvatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`,
-    content: '这是一条评论内容，表达对文章的看法和观点。',
-    likes: Math.floor(Math.random() * 100),
-    createdAt: new Date(Date.now() - Math.random() * 86400000).toISOString()
-  }))
+const buildToc = () => {
+  if (!bodyRef.value) return
+  const hs = bodyRef.value.querySelectorAll('h2, h3')
+  const list: { id: string; text: string; level: number }[] = []
+  hs.forEach((el, idx) => {
+    const h = el as HTMLElement
+    if (!h.id) h.id = `h-auto-${idx}`
+    list.push({ id: h.id, text: h.textContent || '', level: h.tagName === 'H2' ? 2 : 3 })
+  })
+  toc.value = list
 }
 
-const formatTime = (time: string) => {
-  const date = new Date(time)
-  return date.toLocaleString('zh-CN')
+const scrollTo = (id: string) => {
+  const el = document.getElementById(id)
+  if (el) {
+    const y = el.getBoundingClientRect().top + window.scrollY - 140
+    window.scrollTo({ top: y, behavior: 'smooth' })
+  }
+}
+
+const onScroll = () => {
+  const doc = document.documentElement
+  const sh = doc.scrollHeight - doc.clientHeight
+  readProgress.value = sh > 0 ? Math.min(100, Math.max(0, (window.scrollY / sh) * 100)) : 0
+
+  if (!bodyRef.value || !toc.value.length) return
+  const threshold = 180
+  let cur = toc.value[0]?.id || ''
+  for (const h of toc.value) {
+    const el = document.getElementById(h.id)
+    if (!el) continue
+    if (el.getBoundingClientRect().top <= threshold) cur = h.id
+  }
+  activeHeading.value = cur
 }
 
 const handleFavorite = () => {
@@ -249,281 +243,649 @@ const handleFavorite = () => {
 }
 
 const handleShare = () => {
-  const url = window.location.href
-  navigator.clipboard.writeText(url).then(() => {
+  navigator.clipboard.writeText(window.location.href).then(() => {
     ElMessage.success('链接已复制到剪贴板')
   })
 }
 
-const submitComment = async () => {
-  if (!commentContent.value.trim()) {
-    ElMessage.warning('请输入评论内容')
-    return
-  }
-
-  submitting.value = true
-  try {
-    // 模拟提交评论
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    comments.value.unshift({
-      id: Date.now(),
-      username: userStore.userInfo?.username || '当前用户',
-      userAvatar: userStore.userInfo?.avatar || '',
-      content: commentContent.value,
-      likes: 0,
-      createdAt: new Date().toISOString()
-    })
-
-    commentContent.value = ''
-    ElMessage.success('评论发表成功')
-  } catch (error) {
-    ElMessage.error('评论发表失败')
-  } finally {
-    submitting.value = false
-  }
-}
-
 const goToDetail = (id: number) => {
   router.push(`/news/${id}`)
-  fetchArticle()
-  fetchRelatedArticles()
-  window.scrollTo(0, 0)
 }
+
+watch(
+  () => route.params.id,
+  () => {
+    window.scrollTo(0, 0)
+    fetchArticle()
+    fetchRelated()
+  },
+)
 
 onMounted(() => {
   fetchArticle()
-  fetchRelatedArticles()
-  fetchComments()
+  fetchRelated()
+  window.addEventListener('scroll', onScroll, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', onScroll)
 })
 </script>
 
-<style scoped lang="css">
-.article-detail {
+<style scoped>
+.detail-page {
   min-height: 60vh;
+  padding: 28px 0 80px;
+  background: #fff;
+  position: relative;
 }
 
-.article-content {
-  padding: 20px;
+.read-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: var(--brand-red);
+  z-index: 2000;
+  transition: width 80ms linear;
 }
 
-.article-header {
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 56px;
 }
 
-.article-header h1 {
-  font-size: 32px;
-  color: #303133;
-  margin: 0 0 20px;
-  line-height: 1.4;
+@media (max-width: 960px) {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
 }
 
-.article-meta {
+/* ============ 面包屑 ============ */
+.crumb {
   display: flex;
-  gap: 20px;
+  gap: 8px;
   align-items: center;
-  font-size: 14px;
-  color: #909399;
-  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  letter-spacing: 0.06em;
+  color: var(--ink-400);
+  margin-bottom: 24px;
 }
 
-.article-meta span {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.article-cover {
-  margin-bottom: 30px;
-  text-align: center;
-}
-
-.article-cover img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-}
-
-.article-summary {
-  background: #f5f7fa;
-  padding: 20px;
-  border-left: 4px solid #409EFF;
-  margin-bottom: 30px;
-  border-radius: 4px;
-}
-
-.article-summary p {
-  margin: 0;
-  font-size: 16px;
-  color: #606266;
-  line-height: 1.8;
-}
-
-.article-body {
-  font-size: 16px;
-  line-height: 1.8;
-  color: #303133;
-  margin-bottom: 30px;
-}
-
-.article-body :deep(h2) {
-  font-size: 24px;
-  margin: 30px 0 15px;
-  color: #303133;
-}
-
-.article-body :deep(p) {
-  margin-bottom: 15px;
-  text-indent: 2em;
-}
-
-.article-body :deep(ul),
-.article-body :deep(ol) {
-  margin: 15px 0;
-  padding-left: 30px;
-}
-
-.article-body :deep(li) {
-  margin-bottom: 8px;
-}
-
-.article-tags {
-  margin-bottom: 20px;
-  padding: 15px 0;
-  border-top: 1px solid #eee;
-}
-
-.article-actions {
-  display: flex;
-  gap: 10px;
-  padding: 20px 0;
-  border-top: 1px solid #eee;
-}
-
-.comment-section {
-  margin-top: 40px;
-  padding-top: 30px;
-  border-top: 2px solid #eee;
-}
-
-.comment-section h3 {
-  font-size: 20px;
-  margin-bottom: 20px;
-}
-
-.comment-form {
-  margin-bottom: 30px;
-}
-
-.comment-form .el-button {
-  margin-top: 10px;
-}
-
-.comment-login-tip {
-  margin-bottom: 30px;
-}
-
-.comment-login-tip a {
-  color: #409EFF;
+.crumb a {
+  color: var(--ink-600);
   text-decoration: none;
 }
 
-.comment-list {
+.crumb a:hover {
+  color: var(--brand-red);
+}
+
+.crumb .sep {
+  color: var(--ink-300);
+}
+
+.crumb .cur {
+  color: var(--ink-900);
+}
+
+/* ============ 文章头 ============ */
+.art-head {
+  max-width: 760px;
+  margin: 0 0 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.eyebrow {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.comment-item {
-  display: flex;
-  gap: 15px;
-  padding: 15px;
-  background: #f5f7fa;
-  border-radius: 8px;
-}
-
-.comment-content {
-  flex: 1;
-}
-
-.comment-user {
-  font-weight: bold;
-  margin-bottom: 8px;
-  color: #303133;
-}
-
-.comment-text {
-  margin-bottom: 10px;
-  line-height: 1.6;
-  color: #606266;
-}
-
-.comment-meta {
-  display: flex;
-  gap: 15px;
   align-items: center;
-  font-size: 13px;
-  color: #909399;
-}
-
-.sidebar-card {
+  gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 20px;
 }
 
-.card-header {
+.time-line {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-400);
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.time-line .sep {
+  color: var(--ink-300);
+}
+
+.time-line .read-time {
+  color: var(--brand-red);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--fs-display-1);
+  font-weight: var(--fw-bold);
+  color: var(--ink-900);
+  margin: 0 0 20px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 960px) {
+  .title {
+    font-size: 32px;
+  }
+}
+
+.lead {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: var(--fw-regular);
+  line-height: 1.7;
+  color: var(--ink-700);
+  margin: 0 0 24px;
+  font-style: italic;
+}
+
+.byline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.author {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: bold;
+  gap: 12px;
 }
 
-.related-list {
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--brand-navy);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: var(--fw-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.a-name {
+  font-size: 14px;
+  font-weight: var(--fw-medium);
+  color: var(--ink-900);
+}
+
+.a-role {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ink-400);
+  letter-spacing: 0.08em;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.act-btn {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink-600);
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition:
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.act-btn:hover {
+  color: var(--brand-red);
+  border-color: var(--brand-red);
+}
+
+/* ============ 封面 ============ */
+.art-cover {
+  margin: 0 0 36px;
+}
+
+.art-cover img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  display: block;
+}
+
+.art-cover .caption {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--ink-400);
+  margin-top: 10px;
+  padding-left: 12px;
+  border-left: 2px solid var(--brand-red);
+  line-height: 1.6;
+}
+
+/* ============ 正文 ============ */
+.art-body {
+  max-width: 760px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1.85;
+  color: var(--ink-700);
+}
+
+.art-body :deep(h2) {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: var(--fw-bold);
+  color: var(--ink-900);
+  margin: 48px 0 16px;
+  padding-left: 12px;
+  border-left: 3px solid var(--brand-red);
+  line-height: 1.3;
+  scroll-margin-top: 140px;
+}
+
+.art-body :deep(h3) {
+  font-family: var(--font-body);
+  font-size: 20px;
+  font-weight: var(--fw-medium);
+  color: var(--ink-900);
+  margin: 32px 0 12px;
+  scroll-margin-top: 140px;
+}
+
+.art-body :deep(p) {
+  margin-bottom: 20px;
+  text-indent: 2em;
+}
+
+.art-body :deep(p:first-child)::first-letter {
+  font-size: 3em;
+  font-weight: var(--fw-bold);
+  color: var(--brand-navy);
+  float: left;
+  line-height: 0.9;
+  padding: 4px 8px 0 0;
+}
+
+.art-body :deep(blockquote) {
+  margin: 24px 0;
+  padding: 12px 20px 12px 24px;
+  border-left: 3px solid var(--brand-gold);
+  background: var(--mist-50);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 17px;
+  color: var(--ink-700);
+  line-height: 1.7;
+}
+
+.art-body :deep(ul),
+.art-body :deep(ol) {
+  margin: 16px 0;
+  padding-left: 28px;
+}
+
+.art-body :deep(li) {
+  margin-bottom: 8px;
+}
+
+.art-body :deep(img) {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  margin: 24px 0;
+}
+
+/* ============ 标签 ============ */
+.art-tags {
+  max-width: 760px;
+  margin: 48px 0 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.t-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  color: var(--ink-400);
+  letter-spacing: 0.12em;
+  margin-right: 8px;
+}
+
+.tag {
+  appearance: none;
+  background: var(--mist-100);
+  border: 1px solid transparent;
+  color: var(--ink-600);
+  padding: 5px 12px;
+  font-size: 13px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.tag:hover {
+  background: #fff;
+  color: var(--brand-red);
+  border-color: var(--brand-red);
+}
+
+.disclaimer {
+  max-width: 760px;
+  font-size: 13px;
+  color: var(--ink-400);
+  padding: 16px 0;
+  border-top: 1px dashed var(--line);
+  border-bottom: 1px dashed var(--line);
+  margin-bottom: 48px;
+  font-style: italic;
+}
+
+/* ============ 评论 ============ */
+.comments {
+  max-width: 760px;
+  margin-top: 24px;
+}
+
+.c-form {
+  margin-bottom: 24px;
+}
+
+.c-form-foot {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.c-login {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--mist-50);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  margin-bottom: 24px;
+  color: var(--ink-600);
+  font-size: 14px;
+}
+
+.c-login-btn {
+  color: #fff;
+  background: var(--brand-navy);
+  padding: 6px 16px;
+  border-radius: var(--radius-xs);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.c-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 16px;
 }
 
-.related-item {
-  cursor: pointer;
-  padding: 10px;
-  border-radius: 4px;
-  transition: background 0.3s;
+.c-item {
+  display: flex;
+  gap: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
 }
 
-.related-item:hover {
-  background: #f5f7fa;
+.c-item:last-child {
+  border-bottom: none;
 }
 
-.related-item h4 {
+.c-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--mist-100);
+  color: var(--ink-600);
+  font-family: var(--font-display);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.c-body {
+  flex: 1;
+}
+
+.c-head {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.c-name {
   font-size: 14px;
-  color: #303133;
-  margin: 0 0 8px;
-  line-height: 1.4;
+  font-weight: var(--fw-medium);
+  color: var(--ink-900);
 }
 
-.related-item p {
-  font-size: 12px;
-  color: #909399;
+.c-time {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ink-400);
+}
+
+.c-text {
+  margin: 0 0 10px;
+  line-height: 1.7;
+  color: var(--ink-700);
+  font-size: 14px;
+}
+
+.c-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.c-btn {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  font-size: var(--fs-meta);
+  color: var(--ink-400);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-xs);
+}
+
+.c-btn:hover {
+  color: var(--brand-red);
+  background: var(--mist-100);
+}
+
+.c-empty {
+  color: var(--ink-400);
+  font-size: 14px;
+  text-align: center;
+  padding: 24px 0;
+}
+
+/* ============ 侧栏 ============ */
+.col-side {
+  min-width: 0;
+}
+
+.sticky {
+  position: sticky;
+  top: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 12px;
+}
+
+.eyebrow-chip {
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--brand-red);
+  font-weight: var(--fw-medium);
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  color: var(--ink-400);
+}
+
+/* TOC */
+.toc {
+  list-style: none;
   margin: 0;
+  padding: 0;
 }
 
-@media (max-width: 768px) {
-  .article-header h1 {
-    font-size: 24px;
-  }
+.toc-li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--ink-600);
+  line-height: 1.5;
+  transition: color var(--dur-fast) var(--ease);
+}
 
-  .article-meta {
-    gap: 10px;
-  }
+.toc-li.lv-3 {
+  padding-left: 16px;
+  font-size: var(--fs-meta);
+}
 
-  .article-body {
-    font-size: 15px;
-  }
+.toc-bar {
+  width: 2px;
+  background: var(--line);
+  flex-shrink: 0;
+  margin-top: 6px;
+  height: 12px;
+  transition: background var(--dur-fast) var(--ease);
+}
 
-  .comment-item {
-    flex-direction: column;
-  }
+.toc-li:hover {
+  color: var(--ink-900);
+}
+
+.toc-li:hover .toc-bar {
+  background: var(--ink-400);
+}
+
+.toc-li.active {
+  color: var(--brand-red);
+  font-weight: var(--fw-medium);
+}
+
+.toc-li.active .toc-bar {
+  background: var(--brand-red);
+}
+
+.toc-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* related list */
+.related {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.r-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  align-items: flex-start;
+}
+
+.r-item:last-child {
+  border-bottom: none;
+}
+
+.r-item:hover .r-title {
+  color: var(--brand-red);
+}
+
+.r-num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ink-400);
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.r-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.r-title {
+  font-size: 13px;
+  color: var(--ink-900);
+  line-height: 1.5;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.r-meta {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ink-400);
 }
 </style>

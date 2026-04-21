@@ -1,0 +1,111 @@
+/**
+ * Design Tokens — modern-gov
+ * 统一的 CSS 变量，所有组件必须引用这些变量而非硬编码颜色
+ */
+
+:root {
+  /* ============ 品牌主色 ============ */
+  --brand-navy: #0a2540;
+  --brand-navy-600: #11365b;
+  --brand-navy-900: #061a33;
+  --brand-red: #c0392b;
+  --brand-red-600: #a33022;
+  --brand-gold: #c9a961;
+  --brand-gold-600: #b3914a;
+
+  /* ============ 墨色阶 ============ */
+  --ink-900: #0f172a;
+  --ink-700: #1e293b;
+  --ink-600: #475569;
+  --ink-400: #94a3b8;
+  --ink-300: #cbd5e1;
+
+  /* ============ 背景与分隔 ============ */
+  --mist-50: #f8fafc;
+  --mist-100: #f1f5f9;
+  --line: #e2e8f0;
+  --line-strong: #cbd5e1;
+
+  /* ============ 语义色 ============ */
+  --state-success: #16a34a;
+  --state-warning: #d97706;
+  --state-danger: #dc2626;
+  --state-info: #2563eb;
+
+  /* ============ 字体 ============ */
+  --font-display:
+    'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Source Han Sans SC', system-ui, sans-serif;
+  --font-body:
+    'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Source Han Sans SC', 'Inter', system-ui,
+    -apple-system, sans-serif;
+  /* 数字优先 IBM Plex；中文回退微软雅黑，避免等宽泛族落到宋体 */
+  --font-mono:
+    'IBM Plex Sans', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', ui-monospace, 'JetBrains Mono',
+    'SFMono-Regular', Menlo, monospace;
+
+  /* ============ 字号（px）— 整体略放大，提升可读性 ============ */
+  --fs-display-1: 52px;
+  --fs-display-2: 40px;
+  --fs-h1: 34px;
+  --fs-h2: 26px;
+  --fs-h3: 22px;
+  --fs-h4: 19px;
+  --fs-body: 17px;
+  --fs-list: 16px;
+  --fs-meta: 14px;
+  --fs-micro: 13px;
+
+  /* ============ 字重 ============ */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-bold: 700;
+
+  /* ============ 间距（8px 基线） ============ */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  /* ============ 圆角 ============ */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-pill: 999px;
+
+  /* ============ 阴影 ============ */
+  --shadow-line: 0 1px 0 var(--line);
+  --shadow-card: 0 8px 24px -12px rgba(10, 37, 64, 0.15);
+  --shadow-lift: 0 12px 32px -14px rgba(10, 37, 64, 0.22);
+
+  /* ============ 动效 ============ */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --dur-fast: 150ms;
+  --dur-base: 200ms;
+  --dur-slow: 240ms;
+
+  /* ============ 布局常量 ============ */
+  --container-max: 1200px;
+  --container-pad: 24px;
+  --header-h: 140px;
+}
+
+/* 尊重用户动效偏好 */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

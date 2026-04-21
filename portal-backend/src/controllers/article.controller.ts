@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { AuthRequest } from "../middlewares/auth";
 import { AppError } from "../middlewares/errorHandler";
-import { articleService } from "../services/prismaService";
+import { articleService, commentService } from "../services/prismaService";
 import { ArticleQueryDTO } from "../models/Article";
 
 /**
@@ -168,8 +168,8 @@ export const getRelatedArticles = async (
       throw new AppError("无效的文章ID", 400);
     }
 
-    // 获取当前文章的分类
-    const currentArticle = await articleService.getArticleById(id);
+    // 获取当前文章的分类（不重复增加浏览量）
+    const currentArticle = await articleService.getArticleByIdWithoutViewIncrement(id);
     if (!currentArticle) {
       throw new AppError("文章不存在", 404);
     }
@@ -197,6 +197,72 @@ export const getRelatedArticles = async (
     });
   } catch (error) {
     console.error("获取相关文章失败:", error);
+    next(error);
+  }
+};
+
+/**
+ * 获取文章下已审核通过的评论（分页）
+ */
+export const getArticleComments = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id || isNaN(id)) {
+      throw new AppError("无效的文章ID", 400);
+    }
+    const page = Number(req.query.page) || 1;
+    const pageSize = Number(req.query.pageSize) || 20;
+    const data = await commentService.getApprovedCommentsByArticle(
+      id,
+      page,
+      pageSize
+    );
+    res.json({
+      code: 200,
+      message: "success",
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * 发表评论（需登录）
+ */
+export const postArticleComment = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id || isNaN(id)) {
+      throw new AppError("无效的文章ID", 400);
+    }
+    if (!req.user?.id) {
+      throw new AppError("请登录后评论", 401);
+    }
+    const { content, parentId } = req.body;
+    if (!content || String(content).trim().length === 0) {
+      throw new AppError("评论内容不能为空", 400);
+    }
+    const c = await commentService.createComment({
+      articleId: id,
+      userId: req.user.id,
+      content: String(content).slice(0, 1000),
+      parentId: parentId != null ? Number(parentId) : undefined,
+    });
+    res.status(201).json({
+      code: 200,
+      message: "提交成功，审核通过后展示",
+      data: c,
+    });
+  } catch (error) {
     next(error);
   }
 };

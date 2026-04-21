@@ -5,9 +5,11 @@ import {
     getHotArticles,
     getRecommendArticles,
     searchArticles,
-    getRelatedArticles
+    getRelatedArticles,
+    getArticleComments,
+    postArticleComment
 } from '../controllers/article.controller'
-import { optionalAuth } from '../middlewares/auth'
+import { optionalAuth, authMiddleware } from '../middlewares/auth'
 
 const router = Router()
 
@@ -16,6 +18,8 @@ router.get('/hot', getHotArticles)
 router.get('/recommend', getRecommendArticles)
 router.get('/search', searchArticles)
 router.get('/:id/related', getRelatedArticles)
+router.get('/:id/comments', getArticleComments)
+router.post('/:id/comments', authMiddleware, postArticleComment)
 router.get('/:id', optionalAuth, getArticleById)
 
 export default router

@@ -7,6 +7,21 @@ import {
     getAdminList,
     deleteAdmin
 } from '../controllers/admin.controller'
+import {
+    adminListArticles,
+    adminGetArticle,
+    adminCreateArticle,
+    adminUpdateArticle,
+    adminDeleteArticle,
+    adminListCategories,
+    adminCreateCategory,
+    adminUpdateCategory,
+    adminDeleteCategory,
+    adminListComments,
+    adminUpdateComment,
+    adminDeleteComment,
+    adminGetStats
+} from '../controllers/adminCms.controller'
 import { authenticateToken } from '../middlewares/auth'
 import { requireAdmin } from '../middlewares/adminAuth'
 
@@ -22,7 +37,26 @@ router.use(authenticateToken, requireAdmin)
 router.get('/info', getAdminInfo)
 router.put('/password', updateAdminPassword)
 
-// 管理员管理（仅超级管理员）
+// 控制台统计
+router.get('/stats', adminGetStats)
+
+// 内容管理 CMS
+router.get('/articles', adminListArticles)
+router.get('/articles/:id', adminGetArticle)
+router.post('/articles', adminCreateArticle)
+router.put('/articles/:id', adminUpdateArticle)
+router.delete('/articles/:id', adminDeleteArticle)
+
+router.get('/categories', adminListCategories)
+router.post('/categories', adminCreateCategory)
+router.put('/categories/:id', adminUpdateCategory)
+router.delete('/categories/:id', adminDeleteCategory)
+
+router.get('/comments', adminListComments)
+router.patch('/comments/:id', adminUpdateComment)
+router.delete('/comments/:id', adminDeleteComment)
+
+// 管理员账号管理
 router.post('/admins', createAdmin)
 router.get('/admins', getAdminList)
 router.delete('/admins/:id', deleteAdmin)

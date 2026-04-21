@@ -93,23 +93,7 @@ const handleLogin = async () => {
       const redirect = route.query.redirect as string || '/'
       router.push(redirect)
     } catch (error: any) {
-      // 模拟登录成功（开发环境）
-      if (error.message?.includes('Failed to fetch') || error.message?.includes('Network')) {
-        const mockUser = {
-          id: 1,
-          username: loginForm.email.split('@')[0] || 'user',
-          email: loginForm.email,
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=1',
-          role: 'user'
-        }
-        const mockToken = 'mock-token-' + Date.now()
-        userStore.login(mockUser, mockToken)
-        ElMessage.success('登录成功（模拟）')
-        const redirect = route.query.redirect as string || '/'
-        router.push(redirect)
-      } else {
-        ElMessage.error(error.message || '登录失败')
-      }
+      ElMessage.error(error.message || '登录失败')
     } finally {
       loading.value = false
     }
@@ -123,7 +107,18 @@ const handleLogin = async () => {
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 200px);
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-navy-900) 100%);
+  position: relative;
+}
+
+.login-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--brand-red);
 }
 
 .login-container {
@@ -133,29 +128,34 @@ const handleLogin = async () => {
 }
 
 .login-card {
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 40px rgba(6, 26, 51, 0.4);
+  border-radius: var(--radius-md);
+  border: none;
 }
 
 .card-header h2 {
   margin: 0;
   text-align: center;
-  color: #303133;
+  color: var(--ink-900);
+  font-family: var(--font-display);
 }
 
 .login-footer {
   text-align: center;
   margin-top: 20px;
   font-size: 14px;
-  color: #606266;
+  color: var(--ink-600);
 }
 
 .login-footer a {
-  color: #409EFF;
+  color: var(--brand-navy);
   text-decoration: none;
   margin-left: 5px;
+  font-weight: var(--fw-medium);
 }
 
 .login-footer a:hover {
+  color: var(--brand-red);
   text-decoration: underline;
 }
 </style>

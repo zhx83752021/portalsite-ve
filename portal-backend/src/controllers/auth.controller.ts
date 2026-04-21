@@ -2,9 +2,17 @@ import { Request, Response, NextFunction } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { AppError } from '../middlewares/errorHandler'
+import { userService } from '../services/prismaService'
 
-// 模拟数据库
-const users: any[] = []
+const signToken = (payload: { id: number; email: string; role: string }) => {
+    const secret = process.env.JWT_SECRET || 'default-secret'
+    return jwt.sign(payload, secret, { expiresIn: '7d' } as jwt.SignOptions)
+}
+
+const toSafeUser = <T extends { password?: string }>(u: T) => {
+    const { password: _pwd, ...rest } = u
+    return rest
+}
 
 export const register = async (
     req: Request,
@@ -14,50 +22,38 @@ export const register = async (
     try {
         const { username, email, password } = req.body
 
-        // 验证输入
         if (!username || !email || !password) {
             throw new AppError('请提供完整的注册信息', 400)
         }
 
-        // 检查用户是否已存在
-        const existingUser = users.find(u => u.email === email)
-        if (existingUser) {
+        const existing = await userService.getUserByEmail(email)
+        if (existing) {
             throw new AppError('该邮箱已被注册', 400)
         }
 
-        // 加密密码
         const hashedPassword = await bcrypt.hash(password, 10)
+        const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(username)}`
 
-        // 创建用户
-        const user = {
-            id: users.length + 1,
+        const created = await userService.createUser({
             username,
             email,
             password: hashedPassword,
-            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
-            role: 'user',
-            createdAt: new Date().toISOString()
-        }
+            avatar,
+            role: 'USER'
+        })
 
-        users.push(user)
-
-        // 生成JWT
-        const secret = process.env.JWT_SECRET || 'default-secret'
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            secret,
-            { expiresIn: '7d' } as jwt.SignOptions
-        )
-
-        // 返回用户信息（不包括密码）
-        const { password: _, ...userInfo } = user
+        const token = signToken({
+            id: created.id,
+            email: created.email,
+            role: created.role
+        })
 
         res.status(201).json({
             code: 200,
             message: '注册成功',
             data: {
                 token,
-                userInfo
+                userInfo: toSafeUser(created)
             }
         })
     } catch (error) {
@@ -73,40 +69,36 @@ export const login = async (
     try {
         const { email, password } = req.body
 
-        // 验证输入
         if (!email || !password) {
             throw new AppError('请提供邮箱和密码', 400)
         }
 
-        // 查找用户
-        const user = users.find(u => u.email === email)
+        const user = await userService.getUserByEmail(email)
         if (!user) {
             throw new AppError('邮箱或密码错误', 401)
         }
 
-        // 验证密码
-        const isPasswordValid = await bcrypt.compare(password, user.password)
-        if (!isPasswordValid) {
+        if (user.status === 0) {
+            throw new AppError('账号已被禁用，请联系管理员', 403)
+        }
+
+        const ok = await bcrypt.compare(password, user.password)
+        if (!ok) {
             throw new AppError('邮箱或密码错误', 401)
         }
 
-        // 生成JWT
-        const secret = process.env.JWT_SECRET || 'default-secret'
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            secret,
-            { expiresIn: '7d' } as jwt.SignOptions
-        )
-
-        // 返回用户信息（不包括密码）
-        const { password: _, ...userInfo } = user
+        const token = signToken({
+            id: user.id,
+            email: user.email,
+            role: user.role
+        })
 
         res.json({
             code: 200,
             message: '登录成功',
             data: {
                 token,
-                userInfo
+                userInfo: toSafeUser(user)
             }
         })
     } catch (error) {
